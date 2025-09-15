@@ -4,6 +4,7 @@ import { Play, RotateCcw, Dice1, Heart, Shield, Trash2, Plus, AlertCircle, User 
 import { useEncounterStore } from '../../stores/encounterStore';
 import { CONDITIONS } from '../../types';
 import type { Encounter, Combatant } from '../../types';
+import { HPModal } from '../../components/HPModal';
 
 interface InitiativeTrackerProps {
   encounter?: Encounter;
@@ -29,8 +30,8 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
     initiative: { selectedCombatantId }
   } = useEncounterStore();
 
-  const [damageInput, setDamageInput] = useState<{ [key: string]: string }>({});
-  const [healInput, setHealInput] = useState<{ [key: string]: string }>({});
+  const [hpModalOpen, setHpModalOpen] = useState(false);
+  const [hpModalCombatant, setHpModalCombatant] = useState<Combatant | null>(null);
 
   if (!encounter) {
     return (
@@ -46,20 +47,19 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
 
   const currentCombatant = encounter.combatants[encounter.currentTurn];
 
-  const handleDamage = (combatantId: string) => {
-    const amount = parseInt(damageInput[combatantId] || '0');
-    if (amount > 0) {
-      damageCombatant(combatantId, amount);
-      setDamageInput(prev => ({ ...prev, [combatantId]: '' }));
-    }
+  const openHPModal = (combatant: Combatant) => {
+    setHpModalCombatant(combatant);
+    setHpModalOpen(true);
   };
 
-  const handleHeal = (combatantId: string) => {
-    const amount = parseInt(healInput[combatantId] || '0');
-    if (amount > 0) {
-      healCombatant(combatantId, amount);
-      setHealInput(prev => ({ ...prev, [combatantId]: '' }));
-    }
+  const updateCombatantHP = (newHp: number, newMaxHp: number, newTempHp: number) => {
+    if (!hpModalCombatant) return;
+    
+    updateCombatant(hpModalCombatant.id, { 
+      hp: newHp, 
+      maxHp: newMaxHp, 
+      tempHp: newTempHp 
+    });
   };
 
   const formatChallengeRating = (cr: string | undefined): string => {
@@ -119,18 +119,6 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
           </div>
         </div>
 
-        {/* Current Turn Indicator */}
-        {currentCombatant && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-red-800 dark:text-red-200">Current Turn:</span>
-              <span className="font-semibold text-red-900 dark:text-red-100">{currentCombatant.name}</span>
-              {currentCombatant.isPC && (
-                <User className="w-4 h-4 text-green-600 dark:text-green-400" />
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Initiative List */}
@@ -254,65 +242,21 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
                         <Heart className="w-3 h-3 text-red-500" />
                         HP
                       </div>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={combatant.hp}
-                          onChange={(e) => updateHitPoints(combatant.id, parseInt(e.target.value) || 0)}
-                          className="w-12 text-center border border-gray-300 dark:border-gray-600 rounded px-1 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <span className="text-gray-500 dark:text-gray-400">/ {combatant.maxHp}</span>
-                      </div>
-                      
-                      {/* Damage/Heal inputs */}
-                      <div className="flex gap-1 mt-1">
-                        <input
-                          type="number"
-                          placeholder="Dmg"
-                          value={damageInput[combatant.id] || ''}
-                          onChange={(e) => setDamageInput(prev => ({ ...prev, [combatant.id]: e.target.value }))}
-                          className="w-8 text-xs text-center border border-red-300 dark:border-red-700 rounded px-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleDamage(combatant.id);
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDamage(combatant.id);
-                          }}
-                          className="text-xs px-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
-                          title="Apply damage"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          placeholder="Heal"
-                          value={healInput[combatant.id] || ''}
-                          onChange={(e) => setHealInput(prev => ({ ...prev, [combatant.id]: e.target.value }))}
-                          className="w-8 text-xs text-center border border-green-300 dark:border-green-700 rounded px-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleHeal(combatant.id);
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleHeal(combatant.id);
-                          }}
-                          className="text-xs px-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-                          title="Apply healing"
-                        >
-                          +
-                        </button>
+                      <div 
+                        className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openHPModal(combatant);
+                        }}
+                      >
+                        <div className="text-sm font-medium">
+                          {combatant.hp}
+                          {combatant.tempHp && combatant.tempHp > 0 && (
+                            <span className="text-blue-600 dark:text-blue-400">+{combatant.tempHp}</span>
+                          )}
+                          <span className="text-gray-500 dark:text-gray-400"> / {combatant.maxHp}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Click to edit</div>
                       </div>
                     </div>
 
@@ -323,10 +267,12 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
                       </div>
                       <input
                         type="number"
-                        value={combatant.ac}
+                        value={combatant.ac || 0}
                         onChange={(e) => updateCombatant(combatant.id, { ac: parseInt(e.target.value) || 0 })}
-                        className="w-12 text-center border border-gray-300 dark:border-gray-600 rounded px-1 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-12 text-center border border-gray-300 dark:border-gray-600 rounded px-1 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
                         onClick={(e) => e.stopPropagation()}
+                        min="0"
+                        max="30"
                       />
                     </div>
 
@@ -360,6 +306,22 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
           </div>
         )}
       </div>
+
+      {/* HP Modal */}
+      {hpModalCombatant && (
+        <HPModal
+          isOpen={hpModalOpen}
+          onClose={() => {
+            setHpModalOpen(false);
+            setHpModalCombatant(null);
+          }}
+          combatantName={hpModalCombatant.name}
+          currentHp={hpModalCombatant.hp}
+          maxHp={hpModalCombatant.maxHp}
+          tempHp={hpModalCombatant.tempHp || 0}
+          onUpdateHp={updateCombatantHP}
+        />
+      )}
     </div>
   );
 };

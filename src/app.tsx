@@ -6,6 +6,7 @@ import { ConditionsTracker } from './components/ConditionsTracker'
 import { PCForm } from './components/PCForm'
 import { RightPanel } from './components/RightPanel'
 import { SaveLoadManager } from './components/SaveLoadManager'
+import { HPModal } from './components/HPModal'
 
 interface Condition {
   name: string
@@ -17,6 +18,7 @@ interface Combatant {
   name: string
   hp: number
   maxHp: number
+  tempHp?: number
   ac: number
   initiative: number
   isPC: boolean
@@ -45,6 +47,7 @@ const App: React.FC = () => {
       name: 'Goblin', 
       hp: 7, 
       maxHp: 7, 
+      tempHp: 0,
       ac: 15, 
       initiative: 12, 
       isPC: false, 
@@ -59,6 +62,7 @@ const App: React.FC = () => {
       name: 'Fighter (PC)', 
       hp: 25, 
       maxHp: 25, 
+      tempHp: 0,
       ac: 18, 
       initiative: 15, 
       isPC: true, 
@@ -68,12 +72,13 @@ const App: React.FC = () => {
   ])
   const [currentTurn, setCurrentTurn] = useState(0)
   const [round, setRound] = useState(1)
-  const [newCreatureName, setNewCreatureName] = useState('')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
   const [selectedCombatant, setSelectedCombatant] = useState<Combatant | null>(null)
   const [encounterNotes, setEncounterNotes] = useState('')
   const [encounterName, setEncounterName] = useState('Goblin Ambush')
+  const [hpModalOpen, setHpModalOpen] = useState(false)
+  const [hpModalCombatant, setHpModalCombatant] = useState<Combatant | null>(null)
 
   const calculateDifficulty = () => {
     const party = combatants.filter(c => c.isPC)
@@ -131,21 +136,6 @@ const App: React.FC = () => {
     setCurrentTurn(nextIndex)
   }
 
-  const addCreature = () => {
-    if (!newCreatureName.trim()) return
-    const newCreature: Combatant = {
-      id: Date.now().toString(),
-      name: newCreatureName,
-      hp: 10,
-      maxHp: 10,
-      ac: 12,
-      initiative: 0,
-      isPC: false,
-      conditions: []
-    }
-    setCombatants(prev => [...prev, newCreature])
-    setNewCreatureName('')
-  }
 
   const addCreatureFromDatabase = (creature: any) => {
     const newCreature: Combatant = {
@@ -153,6 +143,7 @@ const App: React.FC = () => {
       name: creature.name,
       hp: creature.hp,
       maxHp: creature.hp,
+      tempHp: 0,
       ac: creature.ac,
       initiative: 0,
       isPC: false,
@@ -169,6 +160,7 @@ const App: React.FC = () => {
     const newPC: Combatant = {
       id: Date.now().toString() + Math.random(),
       ...pcData,
+      tempHp: 0,
       initiative: 0,
       conditions: []
     }
@@ -217,6 +209,26 @@ const App: React.FC = () => {
     setSelectedCombatant(null)
   }
 
+  const openHPModal = (combatant: Combatant) => {
+    setHpModalCombatant(combatant)
+    setHpModalOpen(true)
+  }
+
+  const updateCombatantHP = (newHp: number, newMaxHp: number, newTempHp: number) => {
+    if (!hpModalCombatant) return
+    
+    setCombatants(prev => prev.map(c =>
+      c.id === hpModalCombatant.id 
+        ? { ...c, hp: newHp, maxHp: newMaxHp, tempHp: newTempHp }
+        : c
+    ))
+    
+    // Update selected combatant if it's the same one
+    if (selectedCombatant?.id === hpModalCombatant.id) {
+      setSelectedCombatant(prev => prev ? { ...prev, hp: newHp, maxHp: newMaxHp, tempHp: newTempHp } : null)
+    }
+  }
+
   const difficultyData = calculateDifficulty()
 
   return (
@@ -239,23 +251,6 @@ const App: React.FC = () => {
 
             <PCForm onAddPC={addPC} />
 
-            {/* Quick Add */}
-            <div className="card-dnd p-4">
-              <h4 className="font-medium text-dnd-primary mb-3">⚡ Quick Add</h4>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Creature name..."
-                  value={newCreatureName}
-                  onChange={(e) => setNewCreatureName(e.target.value)}
-                  className="input-dnd flex-1 text-sm"
-                  onKeyPress={(e) => e.key === 'Enter' && addCreature()}
-                />
-                <button onClick={addCreature} className="btn-dnd px-3 py-2 text-sm flex items-center gap-1 bg-green-600 hover:bg-green-700 border-green-500">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
 
             <CreatureBrowser onAddCreature={addCreatureFromDatabase} />
           </div>
@@ -299,17 +294,34 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Current Turn Banner */}
-        {combatants.length > 0 && combatants[currentTurn] && (
-          <div className="turn-banner text-white p-4 text-center font-bold text-lg animate-fade-in">
-            🎯 <span className="font-display">Current Turn:</span> {combatants[currentTurn].name}
-            {combatants[currentTurn].isPC && ' (Player Character)'}
-          </div>
-        )}
 
         {/* Initiative List */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-dnd">
           <div className="space-y-3">
+            {/* Quick Add Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => {
+                  const newCreature: Combatant = {
+                    id: Date.now().toString(),
+                    name: 'New Combatant',
+                    hp: 10,
+                    maxHp: 10,
+                    tempHp: 0,
+                    ac: 12,
+                    initiative: 0,
+                    isPC: false,
+                    conditions: []
+                  }
+                  setCombatants(prev => [...prev, newCreature])
+                }}
+                className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+                title="Add new combatant"
+              >
+                <Plus className="w-6 h-6" />
+              </button>
+            </div>
+            
             {combatants.map((combatant, index) => (
               <div
                 key={combatant.id}
@@ -358,15 +370,21 @@ const App: React.FC = () => {
                       <Heart className="w-3 h-3 text-red-500" />
                       HP
                     </div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={combatant.hp}
-                        onChange={(e) => updateCreature(combatant.id, 'hp', parseInt(e.target.value) || 0)}
-                        className="input-dnd w-12 text-center"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span className="text-dnd-muted">/ {combatant.maxHp}</span>
+                    <div 
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openHPModal(combatant);
+                      }}
+                    >
+                      <div className="text-sm font-medium">
+                        {combatant.hp}
+                        {combatant.tempHp && combatant.tempHp > 0 && (
+                          <span className="text-blue-600 dark:text-blue-400">+{combatant.tempHp}</span>
+                        )}
+                        <span className="text-dnd-muted"> / {combatant.maxHp}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Click to edit</div>
                     </div>
                   </div>
 
@@ -378,10 +396,12 @@ const App: React.FC = () => {
                     </div>
                     <input
                       type="number"
-                      value={combatant.ac}
+                      value={combatant.ac || 0}
                       onChange={(e) => updateCreature(combatant.id, 'ac', parseInt(e.target.value) || 0)}
-                      className="input-dnd w-12 text-center"
+                      className="input-dnd w-12 text-center font-medium"
                       onClick={(e) => e.stopPropagation()}
+                      min="0"
+                      max="30"
                     />
                   </div>
 
@@ -422,6 +442,22 @@ const App: React.FC = () => {
         onNotesChange={setEncounterNotes}
         onSelectCombatant={setSelectedCombatant}
       />
+
+      {/* HP Modal */}
+      {hpModalCombatant && (
+        <HPModal
+          isOpen={hpModalOpen}
+          onClose={() => {
+            setHpModalOpen(false);
+            setHpModalCombatant(null);
+          }}
+          combatantName={hpModalCombatant.name}
+          currentHp={hpModalCombatant.hp}
+          maxHp={hpModalCombatant.maxHp}
+          tempHp={hpModalCombatant.tempHp || 0}
+          onUpdateHp={updateCombatantHP}
+        />
+      )}
     </div>
   )
 }
