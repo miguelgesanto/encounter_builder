@@ -1,4 +1,4 @@
-/* Component-Specific Styles */
+/* Component-Specific Styles - Updated for Consistent Design System */
 
 /* Encounter Builder Styles */
 .encounter-controls {
@@ -7,16 +7,18 @@
     gap: 2rem;
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: var(--surface-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
 }
 
 .party-setup h3,
 .encounter-info h3 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 1rem;
     font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .party-inputs {
@@ -32,9 +34,10 @@
 
 .budget-display span {
     padding: 0.5rem;
-    background: var(--background-color);
-    border-radius: var(--radius);
-    border: 1px solid var(--border-color);
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-ui-border);
+    color: var(--color-text-secondary);
 }
 
 .encounter-content {
@@ -45,17 +48,19 @@
 
 .monster-search,
 .current-encounter {
-    background: var(--surface-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-xl);
     padding: 1.5rem;
+    box-shadow: var(--shadow-md);
 }
 
 .monster-search h3,
 .current-encounter h3 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 1rem;
     font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .search-controls {
@@ -66,25 +71,27 @@
 }
 
 .monster-card {
-    background: var(--background-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-lg);
     padding: 1rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.2s ease-in-out;
     position: relative;
 }
 
 .monster-card:hover {
-    border-color: var(--secondary-color);
+    border-color: var(--color-ui-border-focus);
     transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
+    background: var(--color-bg-hover);
 }
 
 .monster-card h4 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .monster-stats {
@@ -92,12 +99,12 @@
     justify-content: space-between;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .monster-type {
     font-style: italic;
-    color: var(--text-secondary);
+    color: var(--color-text-muted);
     font-size: 0.85rem;
 }
 
@@ -105,8 +112,8 @@
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
-    background: var(--primary-color);
-    color: var(--text-color);
+    background: var(--color-ui-button-primary);
+    color: white;
     border: none;
     border-radius: 50%;
     width: 24px;
@@ -116,18 +123,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
+    transition: all 0.2s ease-in-out;
 }
 
 .add-monster-btn:hover {
-    background: var(--secondary-color);
+    background: var(--color-ui-button-primary-hover);
     transform: scale(1.1);
 }
 
 .encounter-list {
     min-height: 200px;
-    border: 2px dashed var(--border-color);
-    border-radius: var(--radius);
+    border: 2px dashed var(--color-ui-border);
+    border-radius: var(--radius-lg);
     padding: 1rem;
     margin-bottom: 1rem;
 }
@@ -136,9 +143,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-lg);
     padding: 0.75rem;
     margin-bottom: 0.5rem;
 }
@@ -152,8 +159,9 @@
 }
 
 .monster-info h5 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 0.25rem;
+    font-weight: 600;
 }
 
 .monster-controls {
@@ -169,10 +177,10 @@
 }
 
 .quantity-btn {
-    background: var(--border-color);
-    color: var(--text-color);
+    background: var(--color-ui-button);
+    color: var(--color-text-primary);
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     width: 24px;
     height: 24px;
     cursor: pointer;
@@ -180,10 +188,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease-in-out;
 }
 
 .quantity-btn:hover {
-    background: var(--primary-color);
+    background: var(--color-ui-button-hover);
 }
 
 .quantity-display {
@@ -193,10 +202,10 @@
 }
 
 .remove-monster-btn {
-    background: var(--error-color);
-    color: var(--text-color);
+    background: var(--color-ui-error);
+    color: white;
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     width: 24px;
     height: 24px;
     cursor: pointer;
@@ -204,10 +213,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease-in-out;
 }
 
 .remove-monster-btn:hover {
-    background: #b91c3c;
+    background: var(--color-ui-button-danger-hover);
 }
 
 .encounter-actions {
@@ -218,18 +228,20 @@
 
 /* Monster Detail Modal */
 .monster-details h2 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 1rem;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--color-ui-border);
     padding-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .monster-details .stat-block {
-    background: var(--background-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-lg);
     padding: 1rem;
     margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
 }
 
 .monster-details .abilities {
@@ -241,72 +253,78 @@
 
 .ability-score {
     text-align: center;
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-lg);
     padding: 0.5rem;
 }
 
 .ability-score .score {
     font-weight: bold;
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
 }
 
 .ability-score .modifier {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 /* Bestiary Styles */
 .bestiary-content {
-    background: var(--surface-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-xl);
     padding: 1.5rem;
+    box-shadow: var(--shadow-md);
 }
 
 .bestiary-content h3 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 1rem;
     font-size: 1.5rem;
+    font-weight: 600;
 }
 
 /* Saved Encounters Styles */
 .saved-content {
-    background: var(--surface-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-xl);
     padding: 1.5rem;
+    box-shadow: var(--shadow-md);
 }
 
 .saved-content h3 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 1rem;
     font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .saved-encounter-card {
-    background: var(--background-color);
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-lg);
     padding: 1rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.2s ease-in-out;
 }
 
 .saved-encounter-card:hover {
-    border-color: var(--secondary-color);
+    border-color: var(--color-ui-border-focus);
     transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
+    background: var(--color-bg-hover);
 }
 
 .saved-encounter-card h4 {
-    color: var(--secondary-color);
+    color: var(--color-text-primary);
     margin-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .encounter-summary {
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
 }
@@ -315,17 +333,17 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--color-text-muted);
 }
 
 /* Error and Loading States */
 .error-message {
-    background: var(--error-color);
-    color: var(--text-color);
+    background: var(--color-ui-error);
+    color: white;
     padding: 1rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     margin-bottom: 1rem;
-    border: 2px solid #b91c3c;
+    border: 1px solid var(--color-ui-button-danger-hover);
 }
 
 .loading {
@@ -333,15 +351,15 @@
     justify-content: center;
     align-items: center;
     padding: 2rem;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .loading::after {
     content: '';
     width: 20px;
     height: 20px;
-    border: 2px solid var(--border-color);
-    border-top: 2px solid var(--secondary-color);
+    border: 2px solid var(--color-ui-border);
+    border-top: 2px solid var(--color-ui-button-primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-left: 1rem;
@@ -355,7 +373,7 @@
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: var(--text-secondary);
+    color: var(--color-text-muted);
     font-style: italic;
 }
 

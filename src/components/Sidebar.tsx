@@ -17,28 +17,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={`${
       collapsed ? 'w-12' : 'w-80'
-    } bg-white border-r border-gray-200 flex flex-col transition-all duration-300 overflow-hidden`}>
-      <div className="p-4 border-b border-gray-200">
+    } sidebar-dnd flex flex-col transition-all duration-300 overflow-hidden`}>
+      <div className="p-4 border-b border-dnd">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+            <h2 className="text-lg font-semibold text-dnd-primary">{title}</h2>
           )}
           <button
             onClick={onToggle}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="btn-dnd p-1"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-dnd-secondary" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-5 h-5 text-dnd-secondary" />
             )}
           </button>
         </div>
       </div>
       
       {!collapsed && (
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 scrollbar-dnd">
           {children}
         </div>
       )}

@@ -1,42 +1,5 @@
 /* Main CSS for D&D Encounter Builder & Initiative Tracker - React Version */
-
-/* Theme tokens */
-:root {
-  /* Default to dark-blue */
-  --background-color: #0f0f12;
-  --surface-color: #1a1b23;
-  --text-color: #e8e9f0;
-  --text-secondary: #b4b6c7;
-  --border-color: #374151;
-  --primary-color: #dc2626;
-  --secondary-color: #d4af37;
-  --error-color: #dc2626;
-  --radius: 8px;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --transition: all 0.3s ease;
-}
-
-[data-theme="dark-blue"] {
-  --background-color: #0f0f12;
-  --surface-color: #1a1b23;
-  --text-color: #e8e9f0;
-  --text-secondary: #b4b6c7;
-  --border-color: #374151;
-  --primary-color: #dc2626;
-  --secondary-color: #d4af37;
-  --error-color: #dc2626;
-}
-
-[data-theme="black"] {
-  --background-color: #0b0b0c;
-  --surface-color: #121214;
-  --text-color: #ededf0;
-  --text-secondary: #a1a1aa;
-  --border-color: #2a2a2e;
-  --primary-color: #ef4444;
-  --secondary-color: #9ca3af;
-  --error-color: #ef4444;
-}
+/* This file is now deprecated - all styles moved to index.css for consistency */
 
 /* CSS Reset and Base Styles */
 * {

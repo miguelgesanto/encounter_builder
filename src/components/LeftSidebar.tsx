@@ -16,23 +16,23 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <div className={`${
       collapsed ? 'w-12' : 'w-80'
-    } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 overflow-hidden`}>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+    } sidebar-dnd flex flex-col transition-all duration-300 overflow-hidden`}>
+      <div className="p-4 border-b border-dnd">
         <div className="flex items-center justify-between">
           {!collapsed && (
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <h2 className="text-lg font-semibold text-dnd-primary">
               Encounter Builder
             </h2>
           )}
           <button
             onClick={onToggle}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="btn-dnd p-1"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <ChevronRight className="w-5 h-5 text-dnd-secondary" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <ChevronLeft className="w-5 h-5 text-dnd-secondary" />
             )}
           </button>
         </div>

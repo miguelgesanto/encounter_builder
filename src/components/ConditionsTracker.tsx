@@ -47,17 +47,17 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       {conditions.map((condition, index) => (
         <div
           key={index}
-          className="relative group flex items-center gap-1 text-xs px-2 py-1 bg-red-100 text-red-800 rounded cursor-pointer hover:bg-red-200 transition-colors"
+          className="badge-dnd badge-condition relative group flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer transition-colors"
           title={CONDITIONS[condition.name as keyof typeof CONDITIONS] || 'Unknown condition'}
         >
           <AlertCircle className="w-3 h-3" />
           <span>{condition.name}</span>
           {condition.duration && (
-            <span className="text-red-600">({condition.duration})</span>
+            <span className="opacity-75">({condition.duration})</span>
           )}
           <button
             onClick={() => onRemoveCondition(index)}
-            className="ml-1 hover:text-red-900 transition-colors"
+            className="ml-1 hover:opacity-75 transition-colors"
           >
             <X className="w-3 h-3" />
           </button>
@@ -68,7 +68,7 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="text-xs px-2 py-1 bg-yellow-50 border border-yellow-300 rounded text-yellow-800 hover:bg-yellow-100 transition-colors flex items-center gap-1"
+          className="badge-dnd condition-neutral text-xs px-2 py-1 rounded flex items-center gap-1"
         >
           <Plus className="w-3 h-3" />
           Condition
@@ -83,7 +83,7 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
             />
             
             {/* Dropdown Menu */}
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+            <div className="dropdown-dnd absolute top-full left-0 mt-1 w-48 rounded-lg z-20 max-h-48 overflow-y-auto scrollbar-dnd">
               {Object.entries(CONDITIONS).map(([conditionName, description]) => (
                 <button
                   key={conditionName}
@@ -91,11 +91,11 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
                     onAddCondition(conditionName)
                     setShowDropdown(false)
                   }}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-b-0"
+                  className="dropdown-item w-full text-left px-3 py-2 transition-colors"
                   title={description}
                 >
-                  <div className="font-medium text-sm">{conditionName}</div>
-                  <div className="text-xs text-gray-500 truncate">{description}</div>
+                  <div className="font-medium text-sm text-dnd-primary">{conditionName}</div>
+                  <div className="text-xs text-dnd-muted truncate">{description}</div>
                 </button>
               ))}
             </div>
