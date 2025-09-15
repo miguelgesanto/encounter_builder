@@ -1,0 +1,373 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Custom Properties for D&D Dark Theme */
+:root {
+  /* Background Colors */
+  --color-bg-primary: #0f0f12;
+  --color-bg-secondary: #1a1b23;
+  --color-bg-elevated: #242631;
+  --color-bg-hover: #2d2f3d;
+  
+  /* Text Colors */
+  --color-text-primary: #e8e9f0;
+  --color-text-secondary: #b4b6c7;
+  --color-text-muted: #7c7f8f;
+  --color-text-inverse: #1a1b23;
+  
+  /* Combat State Colors */
+  --color-combat-current-turn: #dc2626;
+  --color-combat-player-character: #059669;
+  --color-combat-monster: #d97706;
+  --color-combat-unconscious: #7f1d1d;
+  --color-combat-dead: #450a0a;
+  
+  /* Condition Colors */
+  --color-conditions-negative: #dc2626;
+  --color-conditions-positive: #059669;
+  --color-conditions-neutral: #d97706;
+  --color-conditions-concentration: #7c3aed;
+  
+  /* Difficulty Colors */
+  --color-difficulty-trivial: #6b7280;
+  --color-difficulty-easy: #059669;
+  --color-difficulty-medium: #d97706;
+  --color-difficulty-hard: #dc2626;
+  --color-difficulty-deadly: #7f1d1d;
+  
+  /* UI Colors */
+  --color-ui-border: #374151;
+  --color-ui-border-focus: #3b82f6;
+  --color-ui-input: #1f2937;
+  --color-ui-button: #374151;
+  --color-ui-button-hover: #4b5563;
+  --color-ui-success: #059669;
+  --color-ui-warning: #d97706;
+  --color-ui-error: #dc2626;
+  --color-ui-info: #3b82f6;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+/* Enhanced Tailwind utilities for D&D theme */
+@layer utilities {
+  /* Background utilities */
+  .bg-dnd-primary { background-color: var(--color-bg-primary); }
+  .bg-dnd-secondary { background-color: var(--color-bg-secondary); }
+  .bg-dnd-elevated { background-color: var(--color-bg-elevated); }
+  .bg-dnd-hover { background-color: var(--color-bg-hover); }
+  
+  /* Text utilities */
+  .text-dnd-primary { color: var(--color-text-primary); }
+  .text-dnd-secondary { color: var(--color-text-secondary); }
+  .text-dnd-muted { color: var(--color-text-muted); }
+  
+  /* Border utilities */
+  .border-dnd { border-color: var(--color-ui-border); }
+  .border-dnd-focus { border-color: var(--color-ui-border-focus); }
+  
+  /* Combat state utilities */
+  .bg-current-turn {
+    background-color: rgb(220 38 38 / 0.1);
+    border-color: var(--color-combat-current-turn);
+    box-shadow: 0 0 0 1px rgb(220 38 38 / 0.3);
+  }
+  
+  .bg-player-character {
+    background-color: rgb(5 150 105 / 0.1);
+    border-color: rgb(5 150 105 / 0.4);
+  }
+  
+  .bg-monster {
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-ui-border);
+  }
+  
+  /* Condition utilities */
+  .condition-negative {
+    background-color: rgb(220 38 38 / 0.15);
+    border-color: rgb(220 38 38 / 0.4);
+    color: var(--color-conditions-negative);
+  }
+  
+  .condition-positive {
+    background-color: rgb(5 150 105 / 0.15);
+    border-color: rgb(5 150 105 / 0.4);
+    color: var(--color-conditions-positive);
+  }
+  
+  .condition-neutral {
+    background-color: rgb(217 119 6 / 0.15);
+    border-color: rgb(217 119 6 / 0.4);
+    color: var(--color-conditions-neutral);
+  }
+  
+  .condition-concentration {
+    background-color: rgb(124 58 237 / 0.15);
+    border-color: rgb(124 58 237 / 0.4);
+    color: var(--color-conditions-concentration);
+  }
+  
+  /* Difficulty utilities */
+  .difficulty-trivial { color: var(--color-difficulty-trivial); }
+  .difficulty-easy { color: var(--color-difficulty-easy); }
+  .difficulty-medium { color: var(--color-difficulty-medium); }
+  .difficulty-hard { color: var(--color-difficulty-hard); }
+  .difficulty-deadly { color: var(--color-difficulty-deadly); }
+  
+  /* Button styles */
+  .btn-dnd {
+    background-color: var(--color-ui-button);
+    border: 1px solid var(--color-ui-border);
+    color: var(--color-text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+  }
+  
+  .btn-dnd:hover {
+    background-color: var(--color-ui-button-hover);
+    border-color: var(--color-ui-border-focus);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .btn-dnd:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Input styles */
+  .input-dnd {
+    background-color: var(--color-ui-input);
+    border: 1px solid var(--color-ui-border);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .input-dnd:focus {
+    outline: none;
+    border-color: var(--color-ui-border-focus);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
+  }
+  
+  .input-dnd::placeholder {
+    color: var(--color-text-muted);
+  }
+  
+  /* Card styles */
+  .card-dnd {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-ui-border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .card-dnd:hover {
+    background-color: var(--color-bg-hover);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
+  }
+  
+  /* Scrollbar styling */
+  .scrollbar-dnd::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .scrollbar-dnd::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+    border-radius: 4px;
+  }
+  
+  .scrollbar-dnd::-webkit-scrollbar-thumb {
+    background: var(--color-ui-border);
+    border-radius: 4px;
+  }
+  
+  .scrollbar-dnd::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ui-button);
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Focus visible for accessibility */
+  .focus-visible:focus {
+    outline: 2px solid var(--color-ui-border-focus);
+    outline-offset: 2px;
+  }
+  
+  /* Typography utilities */
+  .font-display {
+    font-family: 'Cinzel', serif;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 8px currentColor;
+  }
+  
+  /* D&D specific styling */
+  .initiative-card {
+    @apply card-dnd p-4 transition-all duration-200;
+  }
+  
+  .initiative-card.current-turn {
+    @apply bg-current-turn border-2;
+    border-color: var(--color-combat-current-turn);
+  }
+  
+  .initiative-card.player-character {
+    @apply bg-player-character;
+  }
+  
+  .initiative-card.selected {
+    box-shadow: 0 0 0 2px var(--color-ui-border-focus);
+  }
+  
+  .condition-badge {
+    @apply px-2 py-1 text-xs rounded-md border font-medium transition-all duration-200;
+  }
+  
+  .cr-badge {
+    @apply px-2 py-1 text-xs rounded-md font-semibold;
+    background-color: rgb(217 119 6 / 0.2);
+    border: 1px solid rgb(217 119 6 / 0.4);
+    color: var(--color-combat-monster);
+  }
+  
+  .pc-badge {
+    @apply px-2 py-1 text-xs rounded-md font-semibold;
+    background-color: rgb(5 150 105 / 0.2);
+    border: 1px solid rgb(5 150 105 / 0.4);
+    color: var(--color-combat-player-character);
+  }
+  
+  /* Turn banner */
+  .turn-banner {
+    background: linear-gradient(90deg, 
+      rgb(220 38 38 / 0.9) 0%, 
+      rgb(220 38 38 / 0.7) 50%, 
+      rgb(220 38 38 / 0.9) 100%);
+    border-bottom: 2px solid var(--color-combat-current-turn);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+  }
+  
+  /* Sidebar styling */
+  .sidebar-dnd {
+    background-color: var(--color-bg-secondary);
+    border-right: 1px solid var(--color-ui-border);
+  }
+  
+  /* Header styling */
+  .header-dnd {
+    background-color: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-ui-border);
+    backdrop-filter: blur(8px);
+  }
+  
+  /* Modal styling */
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+  }
+  
+  .modal-content {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-ui-border);
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Dropdown styling */
+  .dropdown-dnd {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-ui-border);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+  }
+  
+  .dropdown-item {
+    @apply px-3 py-2 hover:bg-dnd-hover transition-colors cursor-pointer;
+    border-bottom: 1px solid var(--color-ui-border);
+  }
+  
+  .dropdown-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Health bar styling */
+  .health-bar {
+    background: linear-gradient(90deg, 
+      var(--color-conditions-negative) 0%, 
+      var(--color-conditions-neutral) 50%, 
+      var(--color-conditions-positive) 100%);
+    height: 4px;
+    border-radius: 2px;
+  }
+  
+  /* Custom select styling */
+  .select-dnd {
+    @apply input-dnd appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%237c7f8f' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+}
