@@ -6,6 +6,7 @@ import { ConditionsTracker } from './components/ConditionsTracker'
 import { PCForm } from './components/PCForm'
 import { RightPanel } from './components/RightPanel'
 import { SaveLoadManager } from './components/SaveLoadManager'
+import { HPModal } from './components/HPModal'
 
 interface Condition {
   name: string
@@ -17,6 +18,7 @@ interface Combatant {
   name: string
   hp: number
   maxHp: number
+  tempHp?: number
   ac: number
   initiative: number
   isPC: boolean
@@ -74,6 +76,8 @@ const App: React.FC = () => {
   const [selectedCombatant, setSelectedCombatant] = useState<Combatant | null>(null)
   const [encounterNotes, setEncounterNotes] = useState('')
   const [encounterName, setEncounterName] = useState('Goblin Ambush')
+  const [hpModalOpen, setHpModalOpen] = useState(false)
+  const [hpModalCombatant, setHpModalCombatant] = useState<Combatant | null>(null)
 
   const calculateDifficulty = () => {
     const party = combatants.filter(c => c.isPC)
@@ -217,6 +221,24 @@ const App: React.FC = () => {
     setSelectedCombatant(null)
   }
 
+  const openHPModal = (combatant: Combatant) => {
+    setHpModalCombatant(combatant)
+    setHpModalOpen(true)
+  }
+
+  const updateCombatantHP = (id: string, newHP: number, newMaxHP?: number, newTempHP?: number) => {
+    setCombatants(prev => prev.map(c =>
+      c.id === id 
+        ? { 
+            ...c, 
+            hp: newHP, 
+            maxHp: newMaxHP !== undefined ? newMaxHP : c.maxHp,
+            tempHp: newTempHP !== undefined ? newTempHP : c.tempHp
+          } 
+        : c
+    ))
+  }
+
   const difficultyData = calculateDifficulty()
 
   return (
@@ -239,23 +261,6 @@ const App: React.FC = () => {
 
             <PCForm onAddPC={addPC} />
 
-            {/* Quick Add */}
-            <div className="card-dnd p-4">
-              <h4 className="font-medium text-dnd-primary mb-3">⚡ Quick Add</h4>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Creature name..."
-                  value={newCreatureName}
-                  onChange={(e) => setNewCreatureName(e.target.value)}
-                  className="input-dnd flex-1 text-sm"
-                  onKeyPress={(e) => e.key === 'Enter' && addCreature()}
-                />
-                <button onClick={addCreature} className="btn-dnd px-3 py-2 text-sm flex items-center gap-1 bg-green-600 hover:bg-green-700 border-green-500">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
 
             <CreatureBrowser onAddCreature={addCreatureFromDatabase} />
           </div>
@@ -299,22 +304,36 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Current Turn Banner */}
-        {combatants.length > 0 && combatants[currentTurn] && (
-          <div className="turn-banner text-white p-4 text-center font-bold text-lg animate-fade-in">
-            🎯 <span className="font-display">Current Turn:</span> {combatants[currentTurn].name}
-            {combatants[currentTurn].isPC && ' (Player Character)'}
-          </div>
-        )}
 
         {/* Initiative List */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-dnd">
+          {/* Add Creature Button */}
+          <div className="mb-4 flex justify-center">
+            <div className="flex gap-2 items-center bg-gray-800 p-3 rounded-lg border border-gray-600">
+              <input
+                type="text"
+                placeholder="Creature name..."
+                value={newCreatureName}
+                onChange={(e) => setNewCreatureName(e.target.value)}
+                className="input-dnd flex-1 text-sm min-w-48"
+                onKeyPress={(e) => e.key === 'Enter' && addCreature()}
+              />
+              <button 
+                onClick={addCreature} 
+                className="btn-dnd px-3 py-2 text-sm flex items-center gap-1 bg-green-600 hover:bg-green-700 border-green-500"
+                title="Add creature"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-3">
             {combatants.map((combatant, index) => (
               <div
                 key={combatant.id}
                 onClick={() => handleCombatantClick(combatant)}
-                className={`initiative-card cursor-pointer ${index === currentTurn ? 'current-turn' : ''} ${combatant.isPC ? 'player-character' : ''} ${selectedCombatant?.id === combatant.id ? 'selected' : ''}`}
+                className={`initiative-card cursor-pointer ${combatant.isPC ? 'player-character' : ''} ${selectedCombatant?.id === combatant.id ? 'selected' : ''}`}
               >
                 <div className="flex items-center gap-4 mb-3">
                   {/* Initiative */}
@@ -358,16 +377,23 @@ const App: React.FC = () => {
                       <Heart className="w-3 h-3 text-red-500" />
                       HP
                     </div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={combatant.hp}
-                        onChange={(e) => updateCreature(combatant.id, 'hp', parseInt(e.target.value) || 0)}
-                        className="input-dnd w-12 text-center"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <span className="text-dnd-muted">/ {combatant.maxHp}</span>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openHPModal(combatant)
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      title="Click to manage HP"
+                    >
+                      <span className="font-medium text-red-800 dark:text-red-200">
+                        {combatant.hp + (combatant.tempHp || 0)} / {combatant.maxHp}
+                      </span>
+                      {combatant.tempHp && combatant.tempHp > 0 && (
+                        <span className="text-xs text-blue-600 dark:text-blue-400">
+                          (+{combatant.tempHp})
+                        </span>
+                      )}
+                    </button>
                   </div>
 
                   {/* AC */}
@@ -376,13 +402,11 @@ const App: React.FC = () => {
                       <Shield className="w-3 h-3 text-blue-500" />
                       AC
                     </div>
-                    <input
-                      type="number"
-                      value={combatant.ac}
-                      onChange={(e) => updateCreature(combatant.id, 'ac', parseInt(e.target.value) || 0)}
-                      className="input-dnd w-12 text-center"
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                    <div className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                      <span className="font-medium text-blue-800 dark:text-blue-200">
+                        {combatant.ac}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Remove button */}
@@ -422,6 +446,19 @@ const App: React.FC = () => {
         onNotesChange={setEncounterNotes}
         onSelectCombatant={setSelectedCombatant}
       />
+
+      {/* HP Modal */}
+      {hpModalCombatant && (
+        <HPModal
+          isOpen={hpModalOpen}
+          onClose={() => {
+            setHpModalOpen(false)
+            setHpModalCombatant(null)
+          }}
+          combatant={hpModalCombatant}
+          onUpdateHP={updateCombatantHP}
+        />
+      )}
     </div>
   )
 }

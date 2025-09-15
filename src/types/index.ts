@@ -33,6 +33,7 @@ export interface Combatant {
   name: string;
   hp: number;
   maxHp: number;
+  tempHp?: number;
   ac: number;
   initiative: number;
   isPC: boolean;
