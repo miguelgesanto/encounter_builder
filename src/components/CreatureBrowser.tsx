@@ -41,13 +41,13 @@ export const CreatureBrowser: React.FC<CreatureBrowserProps> = ({ onAddCreature 
       {/* Search and Filter */}
       <div className="space-y-2 mb-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dnd-muted w-4 h-4" />
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-dnd-muted w-4 h-4 pointer-events-none z-10" />
           <input
             type="text"
             placeholder="Search creatures..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-dnd w-full pl-10 pr-4 py-2"
+            className="input-dnd w-full pl-8 pr-3 py-2 text-sm"
           />
         </div>
         
