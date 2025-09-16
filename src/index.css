@@ -109,14 +109,15 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.3;
   color: var(--color-text-primary);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
-h1 { font-size: 2.25rem; } /* 36px */
-h2 { font-size: 1.875rem; } /* 30px */
-h3 { font-size: 1.5rem; } /* 24px */
-h4 { font-size: 1.25rem; } /* 20px */
-h5 { font-size: 1.125rem; } /* 18px */
-h6 { font-size: 1rem; } /* 16px */
+h1 { font-size: 2.25rem; font-weight: 700; } /* 36px - Extra bold for main titles */
+h2 { font-size: 1.875rem; font-weight: 600; } /* 30px */
+h3 { font-size: 1.5rem; font-weight: 600; } /* 24px */
+h4 { font-size: 1.25rem; font-weight: 500; } /* 20px */
+h5 { font-size: 1.125rem; font-weight: 500; } /* 18px */
+h6 { font-size: 1rem; font-weight: 500; } /* 16px */
 
 p {
   margin: 0;
@@ -164,12 +165,12 @@ input::placeholder, textarea::placeholder {
   .bg-dnd-elevated { background-color: var(--color-bg-elevated); }
   .bg-dnd-hover { background-color: var(--color-bg-hover); }
   .bg-dnd-card { background-color: var(--color-bg-card); }
-  
+
   /* Text utilities - Consistent white/gray scale */
-  .text-dnd-primary { color: var(--color-text-primary); }
-  .text-dnd-secondary { color: var(--color-text-secondary); }
-  .text-dnd-muted { color: var(--color-text-muted); }
-  
+  .text-dnd-primary { color: var(--color-text-primary) !important; }
+  .text-dnd-secondary { color: var(--color-text-secondary) !important; }
+  .text-dnd-muted { color: var(--color-text-muted) !important; }
+
   /* Border utilities */
   .border-dnd { border-color: var(--color-ui-border); }
   .border-dnd-focus { border-color: var(--color-ui-border-focus); }
@@ -231,25 +232,34 @@ input::placeholder, textarea::placeholder {
     padding: 0.5rem 1rem;
     border-radius: var(--radius-lg);
     transition: all 0.2s ease-in-out;
+    font-family: 'Inter', sans-serif;
     font-weight: 500;
     font-size: 0.875rem;
+    line-height: 1.25rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     cursor: pointer;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
   }
-  
+
   .btn-dnd:hover {
     background-color: var(--color-ui-button-hover);
     border-color: var(--color-ui-border-focus);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
   }
-  
+
   .btn-dnd:active {
     transform: translateY(0);
     box-shadow: var(--shadow-sm);
+  }
+
+  .btn-dnd:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
   }
   
   /* Button variants - Consistent color scheme */
@@ -305,17 +315,21 @@ input::placeholder, textarea::placeholder {
     border-radius: var(--radius-lg);
     padding: 0.5rem 0.75rem;
     transition: all 0.2s ease-in-out;
+    font-family: 'Inter', sans-serif;
     font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 400;
   }
-  
+
   .input-dnd:focus {
     outline: none;
     border-color: var(--color-ui-border-focus);
     box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
   }
-  
+
   .input-dnd::placeholder {
     color: var(--color-text-muted);
+    font-weight: 400;
   }
   
   /* Card styles - Consistent with design system */
@@ -325,12 +339,20 @@ input::placeholder, textarea::placeholder {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
   }
-  
+
   .card-dnd:hover {
     background-color: var(--color-bg-hover);
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
+    border-color: var(--color-ui-border-focus);
+  }
+
+  .card-dnd:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
   
   /* Badge styles - Consistent with combat colors */
@@ -424,7 +446,8 @@ input::placeholder, textarea::placeholder {
   
   /* D&D specific styling */
   .initiative-card {
-    @apply card-dnd p-4 transition-all duration-200;
+    @apply card-dnd transition-all duration-200;
+    padding: 0.5rem;
   }
   
   .initiative-card.current-turn {
@@ -485,12 +508,16 @@ input::placeholder, textarea::placeholder {
   .modal-overlay {
     background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
+    z-index: 1000;
   }
-  
+
   .modal-content {
     background-color: var(--color-bg-elevated);
     border: 1px solid var(--color-ui-border);
     box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius-xl);
+    max-height: 90vh;
+    overflow-y: auto;
   }
   
   /* Dropdown styling */
@@ -499,13 +526,43 @@ input::placeholder, textarea::placeholder {
     border: 1px solid var(--color-ui-border);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(8px);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    z-index: 50;
   }
-  
+
   .dropdown-item {
-    @apply px-3 py-2 hover:bg-dnd-hover transition-colors cursor-pointer;
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    text-align: left;
+    color: var(--color-text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
     border-bottom: 1px solid var(--color-ui-border);
   }
-  
+
+  .dropdown-item:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .dropdown-item:focus {
+    outline: none;
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .dropdown-item:active {
+    background-color: var(--color-ui-border);
+  }
+
   .dropdown-item:last-child {
     border-bottom: none;
   }
@@ -522,11 +579,31 @@ input::placeholder, textarea::placeholder {
   
   /* Custom select styling */
   .select-dnd {
-    @apply input-dnd appearance-none cursor-pointer;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%237c7f8f' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-color: var(--color-ui-input);
+    border: 1px solid var(--color-ui-border);
+    color: var(--color-text-primary);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    transition: all 0.2s ease-in-out;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 400;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
+  }
+
+  .select-dnd:focus {
+    outline: none;
+    border-color: var(--color-ui-border-focus);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
+  }
+
+  .select-dnd:hover {
+    border-color: var(--color-ui-border-focus);
   }
 }

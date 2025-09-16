@@ -1,2 +1,200 @@
 // D&D-themed dark design system for combat tracker
-export const designSystem = {\n  // Color Palette - Dark theme optimized for D&D\n  colors: {\n    // Background Colors\n    bg: {\n      primary: '#0f0f12',        // Deep dark blue-black (main background)\n      secondary: '#1a1b23',      // Dark slate (secondary surfaces)\n      elevated: '#242631',       // Elevated surfaces (cards, panels)\n      hover: '#2d2f3d',         // Hover states\n    },\n    \n    // Text Colors\n    text: {\n      primary: '#e8e9f0',       // Main text (off-white)\n      secondary: '#b4b6c7',     // Secondary text\n      muted: '#7c7f8f',         // Muted text, labels\n      inverse: '#1a1b23',       // Text on light backgrounds\n    },\n    \n    // D&D Thematic Colors\n    dnd: {\n      // Class Colors (desaturated for dark theme)\n      barbarian: '#e74c3c',\n      bard: '#e67e22',\n      cleric: '#f1c40f',\n      druid: '#27ae60',\n      fighter: '#34495e',\n      monk: '#9b59b6',\n      paladin: '#3498db',\n      ranger: '#16a085',\n      rogue: '#95a5a6',\n      sorcerer: '#e74c3c',\n      warlock: '#8e44ad',\n      wizard: '#2980b9',\n    },\n    \n    // Combat State Colors\n    combat: {\n      currentTurn: '#dc2626',    // Active turn (red)\n      playerCharacter: '#059669', // PC indicator (green)\n      monster: '#d97706',        // Monster/NPC (orange)\n      unconscious: '#7f1d1d',    // Unconscious state\n      dead: '#450a0a',           // Dead state\n    },\n    \n    // Condition Colors\n    conditions: {\n      negative: '#dc2626',       // Harmful conditions (red)\n      positive: '#059669',       // Beneficial conditions (green)\n      neutral: '#d97706',        // Neutral conditions (amber)\n      concentration: '#7c3aed',  // Concentration (purple)\n    },\n    \n    // Difficulty Colors\n    difficulty: {\n      trivial: '#6b7280',\n      easy: '#059669',\n      medium: '#d97706',\n      hard: '#dc2626',\n      deadly: '#7f1d1d',\n    },\n    \n    // UI Colors\n    ui: {\n      border: '#374151',         // Borders\n      borderFocus: '#3b82f6',    // Focus borders\n      input: '#1f2937',          // Input backgrounds\n      button: '#374151',         // Button backgrounds\n      buttonHover: '#4b5563',    // Button hover\n      success: '#059669',\n      warning: '#d97706',\n      error: '#dc2626',\n      info: '#3b82f6',\n    },\n  },\n  \n  // Typography\n  typography: {\n    fontFamily: {\n      sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],\n      mono: ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],\n      display: ['Cinzel', 'serif'], // Fantasy font for headers\n    },\n    \n    fontSize: {\n      xs: '0.75rem',   // 12px\n      sm: '0.875rem',  // 14px\n      base: '1rem',    // 16px\n      lg: '1.125rem',  // 18px\n      xl: '1.25rem',   // 20px\n      '2xl': '1.5rem', // 24px\n      '3xl': '1.875rem', // 30px\n    },\n    \n    fontWeight: {\n      normal: '400',\n      medium: '500',\n      semibold: '600',\n      bold: '700',\n    },\n  },\n  \n  // Spacing\n  spacing: {\n    xs: '0.25rem',   // 4px\n    sm: '0.5rem',    // 8px\n    md: '0.75rem',   // 12px\n    lg: '1rem',      // 16px\n    xl: '1.5rem',    // 24px\n    '2xl': '2rem',   // 32px\n  },\n  \n  // Border Radius\n  borderRadius: {\n    sm: '0.25rem',   // 4px\n    md: '0.375rem',  // 6px\n    lg: '0.5rem',    // 8px\n    xl: '0.75rem',   // 12px\n  },\n  \n  // Shadows\n  shadows: {\n    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.3)',\n    md: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',\n    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',\n    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',\n  },\n  \n  // Z-Index\n  zIndex: {\n    base: 0,\n    elevated: 10,\n    overlay: 50,\n    modal: 100,\n    tooltip: 200,\n  },\n}\n\n// CSS Custom Properties Generator\nexport const generateCSSVariables = () => {\n  const cssVars = []\n  \n  // Generate color variables\n  Object.entries(designSystem.colors).forEach(([category, colors]) => {\n    if (typeof colors === 'object') {\n      Object.entries(colors).forEach(([name, value]) => {\n        cssVars.push(`--color-${category}-${name}: ${value};`)\n      })\n    }\n  })\n  \n  // Generate spacing variables\n  Object.entries(designSystem.spacing).forEach(([name, value]) => {\n    cssVars.push(`--spacing-${name}: ${value};`)\n  })\n  \n  // Generate border radius variables\n  Object.entries(designSystem.borderRadius).forEach(([name, value]) => {\n    cssVars.push(`--radius-${name}: ${value};`)\n  })\n  \n  return `:root {\\n  ${cssVars.join('\\n  ')}\\n}`\n}\n\n// Component Style Utilities\nexport const styleUtils = {\n  // Combat turn indicators\n  getCurrentTurnStyle: () => ({\n    backgroundColor: designSystem.colors.combat.currentTurn + '20', // 20% opacity\n    borderColor: designSystem.colors.combat.currentTurn,\n    borderWidth: '2px',\n    boxShadow: `0 0 0 1px ${designSystem.colors.combat.currentTurn}40`,\n  }),\n  \n  // Player vs NPC styling\n  getCreatureTypeStyle: (isPC: boolean) => ({\n    backgroundColor: isPC \n      ? designSystem.colors.combat.playerCharacter + '15'\n      : designSystem.colors.bg.elevated,\n    borderColor: isPC\n      ? designSystem.colors.combat.playerCharacter + '60'\n      : designSystem.colors.ui.border,\n  }),\n  \n  // Condition styling\n  getConditionStyle: (conditionType: 'negative' | 'positive' | 'neutral' | 'concentration') => ({\n    backgroundColor: designSystem.colors.conditions[conditionType] + '20',\n    borderColor: designSystem.colors.conditions[conditionType] + '60',\n    color: designSystem.colors.conditions[conditionType],\n  }),\n  \n  // Difficulty styling\n  getDifficultyStyle: (difficulty: keyof typeof designSystem.colors.difficulty) => ({\n    color: designSystem.colors.difficulty[difficulty],\n    fontWeight: designSystem.typography.fontWeight.bold,\n  }),\n}\n\nexport default designSystem", "oldText": "", "newText": "// D&D-themed dark design system for combat tracker\nexport const designSystem = {\n  // Color Palette - Dark theme optimized for D&D\n  colors: {\n    // Background Colors\n    bg: {\n      primary: '#0f0f12',        // Deep dark blue-black (main background)\n      secondary: '#1a1b23',      // Dark slate (secondary surfaces)\n      elevated: '#242631',       // Elevated surfaces (cards, panels)\n      hover: '#2d2f3d',         // Hover states\n    },\n    \n    // Text Colors\n    text: {\n      primary: '#e8e9f0',       // Main text (off-white)\n      secondary: '#b4b6c7',     // Secondary text\n      muted: '#7c7f8f',         // Muted text, labels\n      inverse: '#1a1b23',       // Text on light backgrounds\n    },\n    \n    // D&D Thematic Colors\n    dnd: {\n      // Class Colors (desaturated for dark theme)\n      barbarian: '#e74c3c',\n      bard: '#e67e22',\n      cleric: '#f1c40f',\n      druid: '#27ae60',\n      fighter: '#34495e',\n      monk: '#9b59b6',\n      paladin: '#3498db',\n      ranger: '#16a085',\n      rogue: '#95a5a6',\n      sorcerer: '#e74c3c',\n      warlock: '#8e44ad',\n      wizard: '#2980b9',\n    },\n    \n    // Combat State Colors\n    combat: {\n      currentTurn: '#dc2626',    // Active turn (red)\n      playerCharacter: '#059669', // PC indicator (green)\n      monster: '#d97706',        // Monster/NPC (orange)\n      unconscious: '#7f1d1d',    // Unconscious state\n      dead: '#450a0a',           // Dead state\n    },\n    \n    // Condition Colors\n    conditions: {\n      negative: '#dc2626',       // Harmful conditions (red)\n      positive: '#059669',       // Beneficial conditions (green)\n      neutral: '#d97706',        // Neutral conditions (amber)\n      concentration: '#7c3aed',  // Concentration (purple)\n    },\n    \n    // Difficulty Colors\n    difficulty: {\n      trivial: '#6b7280',\n      easy: '#059669',\n      medium: '#d97706',\n      hard: '#dc2626',\n      deadly: '#7f1d1d',\n    },\n    \n    // UI Colors\n    ui: {\n      border: '#374151',         // Borders\n      borderFocus: '#3b82f6',    // Focus borders\n      input: '#1f2937',          // Input backgrounds\n      button: '#374151',         // Button backgrounds\n      buttonHover: '#4b5563',    // Button hover\n      success: '#059669',\n      warning: '#d97706',\n      error: '#dc2626',\n      info: '#3b82f6',\n    },\n  },\n  \n  // Typography\n  typography: {\n    fontFamily: {\n      sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],\n      mono: ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],\n      display: ['Cinzel', 'serif'], // Fantasy font for headers\n    },\n    \n    fontSize: {\n      xs: '0.75rem',   // 12px\n      sm: '0.875rem',  // 14px\n      base: '1rem',    // 16px\n      lg: '1.125rem',  // 18px\n      xl: '1.25rem',   // 20px\n      '2xl': '1.5rem', // 24px\n      '3xl': '1.875rem', // 30px\n    },\n    \n    fontWeight: {\n      normal: '400',\n      medium: '500',\n      semibold: '600',\n      bold: '700',\n    },\n  },\n  \n  // Spacing\n  spacing: {\n    xs: '0.25rem',   // 4px\n    sm: '0.5rem',    // 8px\n    md: '0.75rem',   // 12px\n    lg: '1rem',      // 16px\n    xl: '1.5rem',    // 24px\n    '2xl': '2rem',   // 32px\n  },\n  \n  // Border Radius\n  borderRadius: {\n    sm: '0.25rem',   // 4px\n    md: '0.375rem',  // 6px\n    lg: '0.5rem',    // 8px\n    xl: '0.75rem',   // 12px\n  },\n  \n  // Shadows\n  shadows: {\n    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.3)',\n    md: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',\n    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',\n    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',\n  },\n  \n  // Z-Index\n  zIndex: {\n    base: 0,\n    elevated: 10,\n    overlay: 50,\n    modal: 100,\n    tooltip: 200,\n  },\n}\n\n// CSS Custom Properties Generator\nexport const generateCSSVariables = () => {\n  const cssVars = []\n  \n  // Generate color variables\n  Object.entries(designSystem.colors).forEach(([category, colors]) => {\n    if (typeof colors === 'object') {\n      Object.entries(colors).forEach(([name, value]) => {\n        cssVars.push(`--color-${category}-${name}: ${value};`)\n      })\n    }\n  })\n  \n  // Generate spacing variables\n  Object.entries(designSystem.spacing).forEach(([name, value]) => {\n    cssVars.push(`--spacing-${name}: ${value};`)\n  })\n  \n  // Generate border radius variables\n  Object.entries(designSystem.borderRadius).forEach(([name, value]) => {\n    cssVars.push(`--radius-${name}: ${value};`)\n  })\n  \n  return `:root {\\n  ${cssVars.join('\\n  ')}\\n}`\n}\n\n// Component Style Utilities\nexport const styleUtils = {\n  // Combat turn indicators\n  getCurrentTurnStyle: () => ({\n    backgroundColor: designSystem.colors.combat.currentTurn + '20', // 20% opacity\n    borderColor: designSystem.colors.combat.currentTurn,\n    borderWidth: '2px',\n    boxShadow: `0 0 0 1px ${designSystem.colors.combat.currentTurn}40`,\n  }),\n  \n  // Player vs NPC styling\n  getCreatureTypeStyle: (isPC: boolean) => ({\n    backgroundColor: isPC \n      ? designSystem.colors.combat.playerCharacter + '15'\n      : designSystem.colors.bg.elevated,\n    borderColor: isPC\n      ? designSystem.colors.combat.playerCharacter + '60'\n      : designSystem.colors.ui.border,\n  }),\n  \n  // Condition styling\n  getConditionStyle: (conditionType: 'negative' | 'positive' | 'neutral' | 'concentration') => ({\n    backgroundColor: designSystem.colors.conditions[conditionType] + '20',\n    borderColor: designSystem.colors.conditions[conditionType] + '60',\n    color: designSystem.colors.conditions[conditionType],\n  }),\n  \n  // Difficulty styling\n  getDifficultyStyle: (difficulty: keyof typeof designSystem.colors.difficulty) => ({\n    color: designSystem.colors.difficulty[difficulty],\n    fontWeight: designSystem.typography.fontWeight.bold,\n  }),\n}\n\nexport default designSystem"}]
+export const designSystem = {
+  // Color Palette - Dark theme optimized for D&D
+  colors: {
+    // Background Colors
+    bg: {
+      primary: '#0f0f12',        // Deep dark blue-black (main background)
+      secondary: '#1a1b23',      // Dark slate (secondary surfaces)
+      elevated: '#242631',       // Elevated surfaces (cards, panels)
+      hover: '#2d2f3d',         // Hover states
+    },
+
+    // Text Colors
+    text: {
+      primary: '#e8e9f0',       // Main text (off-white)
+      secondary: '#b4b6c7',     // Secondary text
+      muted: '#7c7f8f',         // Muted text, labels
+      inverse: '#1a1b23',       // Text on light backgrounds
+    },
+
+    // D&D Thematic Colors
+    dnd: {
+      // Class Colors (desaturated for dark theme)
+      barbarian: '#e74c3c',
+      bard: '#e67e22',
+      cleric: '#f1c40f',
+      druid: '#27ae60',
+      fighter: '#34495e',
+      monk: '#9b59b6',
+      paladin: '#3498db',
+      ranger: '#16a085',
+      rogue: '#95a5a6',
+      sorcerer: '#e74c3c',
+      warlock: '#8e44ad',
+      wizard: '#2980b9',
+    },
+
+    // Combat State Colors
+    combat: {
+      currentTurn: '#dc2626',    // Active turn (red)
+      playerCharacter: '#059669', // PC indicator (green)
+      monster: '#d97706',        // Monster/NPC (orange)
+      unconscious: '#7f1d1d',    // Unconscious state
+      dead: '#450a0a',           // Dead state
+    },
+
+    // Condition Colors
+    conditions: {
+      negative: '#dc2626',       // Harmful conditions (red)
+      positive: '#059669',       // Beneficial conditions (green)
+      neutral: '#d97706',        // Neutral conditions (amber)
+      concentration: '#7c3aed',  // Concentration (purple)
+    },
+
+    // Difficulty Colors
+    difficulty: {
+      trivial: '#6b7280',
+      easy: '#059669',
+      medium: '#d97706',
+      hard: '#dc2626',
+      deadly: '#7f1d1d',
+    },
+
+    // UI Colors
+    ui: {
+      border: '#374151',         // Borders
+      borderFocus: '#3b82f6',    // Focus borders
+      input: '#1f2937',          // Input backgrounds
+      button: '#374151',         // Button backgrounds
+      buttonHover: '#4b5563',    // Button hover
+      success: '#059669',
+      warning: '#d97706',
+      error: '#dc2626',
+      info: '#3b82f6',
+    },
+  },
+
+  // Typography
+  typography: {
+    fontFamily: {
+      sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+      mono: ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],
+      display: ['Cinzel', 'serif'], // Fantasy font for headers
+    },
+
+    fontSize: {
+      xs: '0.75rem',   // 12px
+      sm: '0.875rem',  // 14px
+      base: '1rem',    // 16px
+      lg: '1.125rem',  // 18px
+      xl: '1.25rem',   // 20px
+      '2xl': '1.5rem', // 24px
+      '3xl': '1.875rem', // 30px
+    },
+
+    fontWeight: {
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700',
+    },
+  },
+
+  // Spacing
+  spacing: {
+    xs: '0.25rem',   // 4px
+    sm: '0.5rem',    // 8px
+    md: '0.75rem',   // 12px
+    lg: '1rem',      // 16px
+    xl: '1.5rem',    // 24px
+    '2xl': '2rem',   // 32px
+  },
+
+  // Border Radius
+  borderRadius: {
+    sm: '0.25rem',   // 4px
+    md: '0.375rem',  // 6px
+    lg: '0.5rem',    // 8px
+    xl: '0.75rem',   // 12px
+  },
+
+  // Shadows
+  shadows: {
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.3)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+  },
+
+  // Z-Index
+  zIndex: {
+    base: 0,
+    elevated: 10,
+    overlay: 50,
+    modal: 100,
+    tooltip: 200,
+  },
+}
+
+// CSS Custom Properties Generator
+export const generateCSSVariables = () => {
+  const cssVars: string[] = []
+
+  // Generate color variables
+  Object.entries(designSystem.colors).forEach(([category, colors]) => {
+    if (typeof colors === 'object') {
+      Object.entries(colors).forEach(([name, value]) => {
+        cssVars.push(`--color-${category}-${name}: ${value};`)
+      })
+    }
+  })
+
+  // Generate spacing variables
+  Object.entries(designSystem.spacing).forEach(([name, value]) => {
+    cssVars.push(`--spacing-${name}: ${value};`)
+  })
+
+  // Generate border radius variables
+  Object.entries(designSystem.borderRadius).forEach(([name, value]) => {
+    cssVars.push(`--radius-${name}: ${value};`)
+  })
+
+  return `:root {\n  ${cssVars.join('\n  ')}\n}`
+}
+
+// Component Style Utilities
+export const styleUtils = {
+  // Combat turn indicators
+  getCurrentTurnStyle: () => ({
+    backgroundColor: designSystem.colors.combat.currentTurn + '20', // 20% opacity
+    borderColor: designSystem.colors.combat.currentTurn,
+    borderWidth: '2px',
+    boxShadow: `0 0 0 1px ${designSystem.colors.combat.currentTurn}40`,
+  }),
+
+  // Player vs NPC styling
+  getCreatureTypeStyle: (isPC: boolean) => ({
+    backgroundColor: isPC
+      ? designSystem.colors.combat.playerCharacter + '15'
+      : designSystem.colors.bg.elevated,
+    borderColor: isPC
+      ? designSystem.colors.combat.playerCharacter + '60'
+      : designSystem.colors.ui.border,
+  }),
+
+  // Condition styling
+  getConditionStyle: (conditionType: 'negative' | 'positive' | 'neutral' | 'concentration') => ({
+    backgroundColor: designSystem.colors.conditions[conditionType] + '20',
+    borderColor: designSystem.colors.conditions[conditionType] + '60',
+    color: designSystem.colors.conditions[conditionType],
+  }),
+
+  // Difficulty styling
+  getDifficultyStyle: (difficulty: keyof typeof designSystem.colors.difficulty) => ({
+    color: designSystem.colors.difficulty[difficulty],
+    fontWeight: designSystem.typography.fontWeight.bold,
+  }),
+}
+
+export default designSystem
