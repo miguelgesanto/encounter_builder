@@ -149,199 +149,144 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
                 onClick={() => setSelectedCombatant(
                   selectedCombatantId === combatant.id ? null : combatant.id
                 )}
-                className={`initiative-card p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                  index === encounter.currentTurn
-                    ? 'bg-current-turn border-2'
-                    : combatant.isPC
-                    ? 'bg-player-character'
-                    : 'bg-monster'
-                } ${
-                  selectedCombatantId === combatant.id ? 'ring-2 ring-blue-500' : ''
-                }`}
+                className={`
+                  flex items-center rounded-2xl px-4 py-2 text-white font-sans gap-3 mb-2 transition-all duration-200 cursor-pointer hover:shadow-lg
+                  ${index === encounter.currentTurn
+                    ? 'bg-gray-900 border-2 border-red-400'
+                    : 'bg-gray-900 hover:bg-gray-800 border-2 border-transparent'
+                  }
+                  ${selectedCombatantId === combatant.id ? 'ring-2 ring-blue-500' : ''}
+                `}
               >
-                <div className="flex items-center gap-4">
-                  {/* Initiative */}
-                  <div className="w-16 text-center">
+                {/* Initiative - Dice emoji + input without box */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎲</span>
+                  <input
+                    type="number"
+                    value={combatant.initiative}
+                    onChange={(e) => updateCombatant(combatant.id, { initiative: parseInt(e.target.value) || 0 })}
+                    className="bg-gray-800 border-none text-white font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                {/* Combatant Info - Compact name with CR chip at end */}
+                <div className="flex-1 min-w-0">
+                  {/* Name row with CR chip at end */}
+                  <div className="flex items-center justify-between mb-1">
                     <input
-                      type="number"
-                      value={combatant.initiative}
-                      onChange={(e) => updateCombatant(combatant.id, { initiative: parseInt(e.target.value) || 0 })}
-                      className="input-dnd w-full text-center px-2 py-1"
+                      type="text"
+                      value={combatant.name}
+                      onChange={(e) => updateCombatant(combatant.id, { name: e.target.value })}
+                      className="bg-transparent border-none text-white font-bold text-sm focus:outline-none flex-1 min-w-0 mr-2"
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        rollInitiative(combatant.id);
-                      }}
-                      className="btn-dnd w-full mt-1 p-1"
-                      title="Roll initiative"
-                    >
-                      <Dice1 className="w-4 h-4 mx-auto" />
-                    </button>
+                    {combatant.isPC ? (
+                      combatant.level && (
+                        <span className="bg-green-900 text-green-300 px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                          Lvl {combatant.level}
+                        </span>
+                      )
+                    ) : (
+                      combatant.cr && (
+                        <span className="bg-amber-900 text-amber-300 px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                          CR {combatant.cr}
+                        </span>
+                      )
+                    )}
                   </div>
 
-                  {/* Name and Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <input
-                        type="text"
-                        value={combatant.name}
-                        onChange={(e) => updateCombatant(combatant.id, { name: e.target.value })}
-                        className="font-medium text-lg border-none bg-transparent focus:outline-none text-dnd-primary"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      {combatant.isPC && (
-                        <span className="badge-dnd badge-pc text-xs px-2 py-1 rounded flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          PC {combatant.level && `(Lvl ${combatant.level})`}
-                        </span>
-                      )}
-                      {!combatant.isPC && combatant.cr && (
-                        <span className="badge-dnd badge-cr text-xs px-2 py-1 rounded">
-                          CR {formatChallengeRating(combatant.cr)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Conditions */}
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      {combatant.conditions.map((condition, condIndex) => (
-                        <span
-                          key={condIndex}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeCondition(combatant.id, condition.name);
-                          }}
-                          className="badge-dnd badge-condition text-xs px-2 py-1 rounded cursor-pointer flex items-center gap-1 transition-colors"
-                          title={`${condition.name}: ${condition.description}. Click to remove.`}
-                        >
-                          <AlertCircle className="w-3 h-3" />
-                          {condition.name}
-                          {condition.duration && ` (${condition.duration})`}
-                        </span>
-                      ))}
-                      
-                      <select
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            const conditionName = e.target.value;
-                            const condition = CONDITIONS[conditionName];
-                            if (condition) {
-                              addCondition(combatant.id, condition);
-                            }
-                            e.target.value = '';
-                          }
+                  {/* Conditions immediately below name */}
+                  <div className="flex flex-wrap gap-1">
+                    {combatant.conditions.map((condition, condIndex) => (
+                      <span
+                        key={condIndex}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeCondition(combatant.id, condition.name);
                         }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="select-dnd text-xs px-2 py-1"
-                        defaultValue=""
+                        className="bg-red-900 text-red-300 px-2 py-1 rounded text-xs cursor-pointer hover:bg-red-800 transition-colors flex items-center gap-1"
+                        title={`${condition.name}: Click to remove`}
                       >
-                        <option value="">+ Condition</option>
-                        {Object.keys(CONDITIONS).map(conditionName => (
-                          <option key={conditionName} value={conditionName}>
-                            {conditionName}
-                          </option>
-                        ))}
-                      </select>
+                        <span>⚠️</span>
+                        {condition.name} ×
+                      </span>
+                    ))}
+
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const conditionName = e.target.value;
+                          const condition = CONDITIONS[conditionName];
+                          if (condition) {
+                            addCondition(combatant.id, condition);
+                          }
+                          e.target.value = '';
+                        }
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="bg-amber-900 text-amber-300 px-2 py-1 rounded text-xs border-none focus:outline-none cursor-pointer hover:bg-amber-800 transition-colors appearance-none"
+                      defaultValue=""
+                    >
+                      <option value="">+ Condition</option>
+                      {Object.keys(CONDITIONS).map(conditionName => (
+                        <option key={conditionName} value={conditionName}>
+                          {conditionName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* HP and AC - Compact boxes like in image */}
+                <div className="flex items-center gap-3">
+                  {/* HP */}
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1 text-xs text-red-400 mb-1">
+                      <span>❤️</span>
+                      <span>HP</span>
+                    </div>
+                    <div className="bg-gray-800 rounded px-3 py-1 text-center min-w-[50px]">
+                      <div className="text-white font-bold text-sm">
+                        {combatant.hp}/{combatant.maxHp}
+                      </div>
+                      {combatant.tempHp && combatant.tempHp > 0 && (
+                        <div className="text-blue-400 text-xs">
+                          +{combatant.tempHp}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Health and AC */}
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <div className="text-xs text-dnd-muted flex items-center justify-center gap-1 mb-1">
-                        <Heart className="w-3 h-3 text-red-500" />
-                        HP
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={combatant.hp}
-                          onChange={(e) => updateHitPoints(combatant.id, parseInt(e.target.value) || 0)}
-                          className="input-dnd w-12 text-center px-1 py-1"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <span className="text-dnd-muted">/ {combatant.maxHp}</span>
-                      </div>
-                      
-                      {/* Damage/Heal inputs */}
-                      <div className="flex gap-1 mt-1">
-                        <input
-                          type="number"
-                          placeholder="Dmg"
-                          value={damageInput[combatant.id] || ''}
-                          onChange={(e) => setDamageInput(prev => ({ ...prev, [combatant.id]: e.target.value }))}
-                          className="input-dnd w-8 text-xs text-center px-1"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleDamage(combatant.id);
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDamage(combatant.id);
-                          }}
-                          className="btn-dnd btn-dnd-danger text-xs px-1"
-                          title="Apply damage"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          placeholder="Heal"
-                          value={healInput[combatant.id] || ''}
-                          onChange={(e) => setHealInput(prev => ({ ...prev, [combatant.id]: e.target.value }))}
-                          className="input-dnd w-8 text-xs text-center px-1"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleHeal(combatant.id);
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleHeal(combatant.id);
-                          }}
-                          className="btn-dnd btn-dnd-success text-xs px-1"
-                          title="Apply healing"
-                        >
-                          +
-                        </button>
-                      </div>
+                  {/* AC */}
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1 text-xs text-blue-400 mb-1">
+                      <span>🛡️</span>
+                      <span>AC</span>
                     </div>
-
-                    <div className="text-center">
-                      <div className="text-xs text-dnd-muted flex items-center justify-center gap-1 mb-1">
-                        <Shield className="w-3 h-3 text-blue-500" />
-                        AC
-                      </div>
+                    <div className="bg-gray-800 rounded px-2 py-1 w-10">
                       <input
                         type="number"
                         value={combatant.ac}
                         onChange={(e) => updateCombatant(combatant.id, { ac: parseInt(e.target.value) || 0 })}
-                        className="input-dnd w-12 text-center px-1 py-1"
+                        className="bg-transparent border-none text-white font-bold text-center w-full text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeCombatant(combatant.id);
-                      }}
-                      className="btn-dnd btn-dnd-danger p-2"
-                      title="Remove combatant"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
+
+                {/* Close Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeCombatant(combatant.id);
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white rounded px-2 py-1 text-sm font-bold transition-colors"
+                >
+                  ×
+                </button>
+              </div>
 
                 {/* Notes (when selected) */}
                 {selectedCombatantId === combatant.id && (

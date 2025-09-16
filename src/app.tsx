@@ -46,29 +46,29 @@ const App: React.FC = () => {
     {
       id: '1',
       name: 'Goblin',
-      hp: 7,
-      maxHp: 7,
-      ac: 15,
-      initiative: 12,
+      hp: parseInt('7'),
+      maxHp: parseInt('7'),
+      ac: parseInt('15'),
+      initiative: parseInt('12'),
       isPC: false,
       conditions: [{ name: 'Poisoned' }],
       cr: '1/4',
       type: 'humanoid',
       environment: 'forest',
-      xp: 50,
-      tempHp: 0
+      xp: parseInt('50'),
+      tempHp: parseInt('0')
     },
     {
       id: '2',
       name: 'Fighter (PC)',
-      hp: 25,
-      maxHp: 25,
-      ac: 18,
-      initiative: 15,
+      hp: parseInt('25'),
+      maxHp: parseInt('25'),
+      ac: parseInt('18'),
+      initiative: parseInt('15'),
       isPC: true,
-      level: 5,
+      level: parseInt('5'),
       conditions: [],
-      tempHp: 0
+      tempHp: parseInt('0')
     },
   ])
   const [currentTurn, setCurrentTurn] = useState(0)
@@ -151,7 +151,12 @@ const App: React.FC = () => {
 
   const updateCombatantHP = (id: string, newHp: number, newMaxHp: number, newTempHp?: number) => {
     setCombatants(prev => prev.map(c =>
-      c.id === id ? { ...c, hp: newHp, maxHp: newMaxHp, tempHp: newTempHp || 0 } : c
+      c.id === id ? {
+        ...c,
+        hp: parseInt(String(newHp)) || 0,
+        maxHp: parseInt(String(newMaxHp)) || 0,
+        tempHp: parseInt(String(newTempHp)) || 0
+      } : c
     ))
   }
 
@@ -229,9 +234,21 @@ const App: React.FC = () => {
   }
 
   const loadEncounter = (encounter: SavedEncounter) => {
-    setCombatants(encounter.combatants)
-    setRound(encounter.round)
-    setCurrentTurn(encounter.currentTurn)
+    // Ensure all numeric values are properly parsed when loading
+    const fixedCombatants = encounter.combatants.map(c => ({
+      ...c,
+      hp: parseInt(String(c.hp)) || 0,
+      maxHp: parseInt(String(c.maxHp)) || 0,
+      ac: parseInt(String(c.ac)) || 0,
+      initiative: parseInt(String(c.initiative)) || 0,
+      tempHp: parseInt(String(c.tempHp)) || 0,
+      level: c.level ? parseInt(String(c.level)) : undefined,
+      xp: c.xp ? parseInt(String(c.xp)) : undefined
+    }))
+
+    setCombatants(fixedCombatants)
+    setRound(parseInt(String(encounter.round)) || 1)
+    setCurrentTurn(parseInt(String(encounter.currentTurn)) || 0)
     setEncounterNotes(encounter.notes)
     setEncounterName(encounter.name)
     setSelectedCombatant(null)
@@ -307,99 +324,116 @@ const App: React.FC = () => {
               <div
                 key={combatant.id}
                 onClick={() => handleCombatantClick(combatant)}
-                className={`initiative-card cursor-pointer p-2 ${index === currentTurn ? 'current-turn' : ''} ${combatant.isPC ? 'player-character' : ''} ${selectedCombatant?.id === combatant.id ? 'selected' : ''}`}
+                className={`
+                  flex items-center rounded-2xl px-4 py-2 text-white font-sans gap-3 mb-2 transition-all duration-200 cursor-pointer hover:shadow-lg
+                  ${index === currentTurn
+                    ? 'bg-gray-900 border-2 border-red-400'
+                    : 'bg-gray-900 hover:bg-gray-800 border-2 border-transparent'
+                  }
+                  ${selectedCombatant?.id === combatant.id ? 'ring-2 ring-blue-500' : ''}
+                `}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  {/* Initiative */}
-                  <div className="w-20 text-center">
-                    <div className="text-xs text-dnd-muted mb-1">Initiative</div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        value={combatant.initiative}
-                        onChange={(e) => updateCreature(combatant.id, 'initiative', parseInt(e.target.value) || 0)}
-                        className="input-dnd w-12 text-center text-sm font-bold p-1"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <button onClick={(e) => { e.stopPropagation(); rollInitiative(combatant.id) }} className="btn-dnd p-1" title="Roll initiative">
-                        <Dice1 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
+                {/* Initiative - Dice emoji + input without box */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎲</span>
+                  <input
+                    type="number"
+                    value={combatant.initiative}
+                    onChange={(e) => updateCreature(combatant.id, 'initiative', parseInt(e.target.value) || 0)}
+                    className="bg-gray-800 border-none text-white font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
 
-                  {/* Name and Badges */}
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <input
-                        type="text"
-                        value={combatant.name}
-                        onChange={(e) => updateCreature(combatant.id, 'name', e.target.value)}
-                        className="font-medium text-base bg-transparent border-none focus:outline-none text-dnd-primary flex-1"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      {combatant.isPC ? (
-                        <span className="pc-badge flex items-center gap-1 text-xs">
-                          <User className="w-3 h-3" />
-                          PC {combatant.level && `${combatant.level}`}
+                {/* Combatant Info - Compact name with CR chip at end */}
+                <div className="flex-1 min-w-0">
+                  {/* Name row with CR chip at end */}
+                  <div className="flex items-center justify-between mb-1">
+                    <input
+                      type="text"
+                      value={combatant.name}
+                      onChange={(e) => updateCreature(combatant.id, 'name', e.target.value)}
+                      className="bg-transparent border-none text-white font-bold text-sm focus:outline-none flex-1 min-w-0 mr-1"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    {combatant.isPC ? (
+                      combatant.level && (
+                        <span className="bg-green-900 text-green-300 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1">
+                          Lvl {combatant.level}
                         </span>
-                      ) : (
-                        combatant.cr && <span className="cr-badge text-xs">CR {combatant.cr}</span>
-                      )}
-                    </div>
+                      )
+                    ) : (
+                      combatant.cr && (
+                        <span className="bg-amber-900 text-amber-300 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1">
+                          CR {combatant.cr}
+                        </span>
+                      )
+                    )}
                   </div>
 
+                  {/* Conditions immediately below name */}
+                  <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                    <ConditionsTracker
+                      conditions={combatant.conditions}
+                      onAddCondition={(condition) => addCondition(combatant.id, condition)}
+                      onRemoveCondition={(index) => removeCondition(combatant.id, index)}
+                    />
+                  </div>
+                </div>
+
+                {/* HP and AC - Compact boxes like in image */}
+                <div className="flex items-center gap-3">
                   {/* HP */}
-                  <div className="text-center">
-                    <div className="text-xs text-dnd-muted flex items-center justify-center gap-1 mb-1">
-                      <Heart className="w-3 h-3 text-red-500" />
-                      HP
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1 text-xs text-red-400 mb-1">
+                      <span>❤️</span>
+                      <span>HP</span>
                     </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         openHPModal(combatant, e);
                       }}
-                      className="btn-dnd px-2 py-1 text-xs hover:bg-dnd-hover transition-colors"
+                      className="bg-gray-800 hover:bg-gray-700 rounded px-2 py-1 text-center min-w-[60px] transition-colors"
                       title="Manage HP"
                     >
-                      <div className="font-medium text-sm">
-                        {combatant.hp + (combatant.tempHp || 0)} / {combatant.maxHp}
+                      <div className="text-white font-bold text-sm whitespace-nowrap">
+                        {parseInt(String(combatant.hp)) || 0}/{parseInt(String(combatant.maxHp)) || 0}
+                        {(parseInt(String(combatant.tempHp)) || 0) > 0 && (
+                          <span className="text-blue-400 ml-3"> +{parseInt(String(combatant.tempHp)) || 0}</span>
+                        )}
                       </div>
-                      {combatant.tempHp && combatant.tempHp > 0 && (
-                        <div className="text-xs text-blue-400">+{combatant.tempHp}</div>
-                      )}
                     </button>
                   </div>
 
                   {/* AC */}
-                  <div className="text-center">
-                    <div className="text-xs text-dnd-muted flex items-center justify-center gap-1 mb-1">
-                      <Shield className="w-3 h-3 text-blue-500" />
-                      AC
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1 text-xs text-blue-400 mb-1">
+                      <span>🛡️</span>
+                      <span>AC</span>
                     </div>
-                    <input
-                      type="number"
-                      value={combatant.ac}
-                      onChange={(e) => updateCreature(combatant.id, 'ac', parseInt(e.target.value) || 0)}
-                      className="input-dnd w-10 text-center text-sm p-1"
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                    <div className="bg-gray-800 rounded px-2 py-1 w-10">
+                      <input
+                        type="number"
+                        value={combatant.ac}
+                        onChange={(e) => updateCreature(combatant.id, 'ac', parseInt(e.target.value) || 0)}
+                        className="bg-transparent border-none text-white font-bold text-center w-full text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
                   </div>
-
-                  {/* Remove button */}
-                  <button onClick={(e) => { e.stopPropagation(); removeCreature(combatant.id) }} className="btn-dnd btn-dnd-danger p-2" title="Remove combatant">
-                    ✕
-                  </button>
                 </div>
 
-                {/* Conditions */}
-                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                  <ConditionsTracker
-                    conditions={combatant.conditions}
-                    onAddCondition={(condition) => addCondition(combatant.id, condition)}
-                    onRemoveCondition={(index) => removeCondition(combatant.id, index)}
-                  />
-                </div>
+                {/* Close Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeCreature(combatant.id);
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white rounded px-2 py-1 text-sm font-bold transition-colors"
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>

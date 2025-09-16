@@ -40,6 +40,11 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
   onUpdateDuration
 }) => {
   const [showDropdown, setShowDropdown] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredConditions = Object.entries(CONDITIONS).filter(([conditionName]) =>
+    conditionName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -47,20 +52,16 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       {conditions.map((condition, index) => (
         <div
           key={index}
-          className="badge-dnd badge-condition relative group flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer transition-colors"
+          className="bg-red-900 text-red-300 px-2 py-1 rounded text-xs cursor-pointer hover:bg-red-800 transition-colors flex items-center gap-1"
           title={CONDITIONS[condition.name as keyof typeof CONDITIONS] || 'Unknown condition'}
+          onClick={() => onRemoveCondition(index)}
         >
-          <AlertCircle className="w-3 h-3" />
+          <span>⚠️</span>
           <span>{condition.name}</span>
           {condition.duration && (
             <span className="opacity-75">({condition.duration})</span>
           )}
-          <button
-            onClick={() => onRemoveCondition(index)}
-            className="ml-1 hover:opacity-75 transition-colors"
-          >
-            <X className="w-3 h-3" />
-          </button>
+          <span className="ml-1">×</span>
         </div>
       ))}
 
@@ -68,7 +69,7 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="badge-dnd condition-neutral text-xs px-2 py-1 rounded flex items-center gap-1"
+          className="bg-transparent border border-gray-600 text-gray-400 px-2 py-1 rounded text-xs flex items-center gap-1 hover:border-gray-500 transition-colors"
         >
           <Plus className="w-3 h-3" />
           Condition
@@ -77,27 +78,47 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
         {showDropdown && (
           <>
             {/* Backdrop */}
-            <div 
-              className="fixed inset-0 z-10" 
+            <div
+              className="fixed inset-0 z-10"
               onClick={() => setShowDropdown(false)}
             />
-            
+
             {/* Dropdown Menu */}
-            <div className="dropdown-dnd absolute top-full left-0 mt-1 w-48 rounded-lg z-20 max-h-48 overflow-y-auto scrollbar-dnd">
-              {Object.entries(CONDITIONS).map(([conditionName, description]) => (
-                <button
-                  key={conditionName}
-                  onClick={() => {
-                    onAddCondition(conditionName)
-                    setShowDropdown(false)
-                  }}
-                  className="dropdown-item w-full text-left px-3 py-2 transition-colors"
-                  title={description}
-                >
-                  <div className="font-medium text-sm text-dnd-primary">{conditionName}</div>
-                  <div className="text-xs text-dnd-muted truncate">{description}</div>
-                </button>
-              ))}
+            <div className="absolute top-full left-0 mt-1 w-64 bg-gray-800 border border-gray-600 rounded-lg z-20 shadow-lg">
+              {/* Search Input */}
+              <div className="p-2 border-b border-gray-600">
+                <input
+                  type="text"
+                  placeholder="Search conditions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-gray-700 text-white text-sm px-3 py-1 rounded border-none focus:outline-none focus:ring-1 focus:ring-gray-500"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+
+              {/* Conditions List */}
+              <div className="max-h-48 overflow-y-auto">
+                {filteredConditions.length > 0 ? (
+                  filteredConditions.map(([conditionName, description]) => (
+                    <button
+                      key={conditionName}
+                      onClick={() => {
+                        onAddCondition(conditionName)
+                        setShowDropdown(false)
+                        setSearchTerm('')
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-700 transition-colors border-none"
+                      title={description}
+                    >
+                      <div className="font-medium text-sm text-white">{conditionName}</div>
+                      <div className="text-xs text-gray-400 truncate">{description}</div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-gray-500 text-sm">No conditions found</div>
+                )}
+              </div>
             </div>
           </>
         )}
