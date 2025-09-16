@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Plus, Dice1, Play, Heart, Shield, User, Swords } from 'lucide-react'
 import { CreatureBrowser } from './components/CreatureBrowser'
 import { Sidebar } from './components/Sidebar'
 import { ConditionsTracker } from './components/ConditionsTracker'
 import { PCForm } from './components/PCForm'
 import { RightPanel } from './components/RightPanel'
-import { SaveLoadManager } from './components/SaveLoadManager'
+import { SaveLoadManager, SavedEncounter } from './components/SaveLoadManager'
 import { HPModal } from './components/HPModal'
 import { QuickAddModal } from './components/QuickAddModal'
 
@@ -31,15 +31,6 @@ interface Combatant {
   tempHp?: number
 }
 
-interface SavedEncounter {
-  id: string
-  name: string
-  combatants: Combatant[]
-  round: number
-  currentTurn: number
-  notes: string
-  savedAt: string
-}
 
 const App: React.FC = () => {
   const [combatants, setCombatants] = useState<Combatant[]>([
@@ -82,6 +73,54 @@ const App: React.FC = () => {
   const [showHPModal, setShowHPModal] = useState(false)
   const [hpModalCombatant, setHpModalCombatant] = useState<Combatant | null>(null)
   const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | null>(null)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [showLoadDialog, setShowLoadDialog] = useState(false)
+  const [saveEncounterName, setSaveEncounterName] = useState('')
+  const [savedEncounters, setSavedEncounters] = useState<SavedEncounter[]>([])
+
+  // Load saved encounters from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('dnd-saved-encounters')
+    if (saved) {
+      try {
+        setSavedEncounters(JSON.parse(saved))
+      } catch (e) {
+        console.error('Error loading saved encounters:', e)
+      }
+    }
+  }, [])
+
+  // Save encounters to localStorage whenever the list changes
+  useEffect(() => {
+    localStorage.setItem('dnd-saved-encounters', JSON.stringify(savedEncounters))
+  }, [savedEncounters])
+
+  const saveEncounter = () => {
+    if (!saveEncounterName.trim()) return
+
+    const savedEncounter: SavedEncounter = {
+      id: Date.now().toString(),
+      name: saveEncounterName.trim(),
+      combatants,
+      round,
+      currentTurn,
+      notes: encounterNotes,
+      savedAt: new Date().toISOString()
+    }
+
+    setSavedEncounters(prev => [...prev, savedEncounter])
+    setShowSaveDialog(false)
+    setSaveEncounterName('')
+  }
+
+  const loadSavedEncounter = (encounter: SavedEncounter) => {
+    loadEncounter(encounter)
+    setShowLoadDialog(false)
+  }
+
+  const deleteEncounter = (encounterId: string) => {
+    setSavedEncounters(prev => prev.filter(enc => enc.id !== encounterId))
+  }
 
   const calculateDifficulty = () => {
     const party = combatants.filter(c => c.isPC)
@@ -292,6 +331,11 @@ const App: React.FC = () => {
               encounterName={encounterName}
               onLoad={loadEncounter}
               onEncounterNameChange={setEncounterName}
+              onShowSaveDialog={() => {
+                setSaveEncounterName(encounterName)
+                setShowSaveDialog(true)
+              }}
+              onShowLoadDialog={() => setShowLoadDialog(true)}
             />
             <div className="text-lg font-semibold text-dnd-primary flex items-center gap-2">
               🎲 Round {round}
@@ -489,6 +533,89 @@ const App: React.FC = () => {
           onUpdateHP={updateCombatantHP}
           position={modalPosition}
         />
+      )}
+
+      {/* Save Dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-70 backdrop-blur-sm">
+          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 w-96 mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold mb-4 text-white">Save Encounter</h3>
+            <input
+              type="text"
+              placeholder="Enter encounter name..."
+              value={saveEncounterName}
+              onChange={(e) => setSaveEncounterName(e.target.value)}
+              className="w-full bg-gray-700 text-white px-3 py-2 mb-4 rounded border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowSaveDialog(false)
+                  setSaveEncounterName('')
+                }}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEncounter}
+                disabled={!saveEncounterName.trim()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load Dialog */}
+      {showLoadDialog && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-70 backdrop-blur-sm">
+          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 w-96 max-h-96 overflow-hidden mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold mb-4 text-white">Load Encounter</h3>
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {savedEncounters.length === 0 ? (
+                <div className="text-gray-400 text-center py-8">No saved encounters</div>
+              ) : (
+                savedEncounters.map((encounter) => (
+                  <div key={encounter.id} className="flex items-center justify-between p-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                    <div className="flex-1">
+                      <div className="font-medium text-white">{encounter.name}</div>
+                      <div className="text-sm text-gray-400">
+                        {encounter.combatants.length} combatants • Round {encounter.round} • {new Date(encounter.savedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => loadSavedEncounter(encounter)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 text-sm rounded transition-colors"
+                      >
+                        Load
+                      </button>
+                      <button
+                        onClick={() => deleteEncounter(encounter.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-sm rounded transition-colors"
+                        title="Delete encounter"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowLoadDialog(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
