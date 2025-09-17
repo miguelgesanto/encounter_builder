@@ -8,31 +8,16 @@ import { RightPanel } from './components/RightPanel'
 import { SaveLoadManager, SavedEncounter } from './components/SaveLoadManager'
 import { HPModal } from './components/HPModal'
 import { QuickAddModal } from './components/QuickAddModal'
-
-interface Condition {
-  name: string
-  duration?: number
-}
-
-interface Combatant {
-  id: string
-  name: string
-  hp: number
-  maxHp: number
-  ac: number
-  initiative: number
-  isPC: boolean
-  level?: number
-  conditions: Condition[]
-  cr?: string
-  type?: string
-  environment?: string
-  xp?: number
-  tempHp?: number
-}
-
+import CombatCard from './components/CombatCard'
+import { Combatant, SavedEncounter as SavedEncounterType } from './types/combatant'
+import { STORAGE_KEYS } from './constants/ui'
+import { useInitiative } from './hooks/useInitiative'
+import { useEncounterBalance } from './hooks/useEncounterBalance'
 
 const App: React.FC = () => {
+  const { rollInitiative, rollAllInitiative, sortByInitiative } = useInitiative();
+  const { calculateDifficulty } = useEncounterBalance();
+
   const [combatants, setCombatants] = useState<Combatant[]>([
     {
       id: '1',
@@ -76,11 +61,11 @@ const App: React.FC = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showLoadDialog, setShowLoadDialog] = useState(false)
   const [saveEncounterName, setSaveEncounterName] = useState('')
-  const [savedEncounters, setSavedEncounters] = useState<SavedEncounter[]>([])
+  const [savedEncounters, setSavedEncounters] = useState<SavedEncounterType[]>([])
 
   // Load saved encounters from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('dnd-saved-encounters')
+    const saved = localStorage.getItem(STORAGE_KEYS.SAVED_ENCOUNTERS)
     if (saved) {
       try {
         setSavedEncounters(JSON.parse(saved))
@@ -92,13 +77,13 @@ const App: React.FC = () => {
 
   // Save encounters to localStorage whenever the list changes
   useEffect(() => {
-    localStorage.setItem('dnd-saved-encounters', JSON.stringify(savedEncounters))
+    localStorage.setItem(STORAGE_KEYS.SAVED_ENCOUNTERS, JSON.stringify(savedEncounters))
   }, [savedEncounters])
 
   const saveEncounter = () => {
     if (!saveEncounterName.trim()) return
 
-    const savedEncounter: SavedEncounter = {
+    const savedEncounter: SavedEncounterType = {
       id: Date.now().toString(),
       name: saveEncounterName.trim(),
       combatants,
@@ -113,7 +98,7 @@ const App: React.FC = () => {
     setSaveEncounterName('')
   }
 
-  const loadSavedEncounter = (encounter: SavedEncounter) => {
+  const loadSavedEncounter = (encounter: SavedEncounterType) => {
     loadEncounter(encounter)
     setShowLoadDialog(false)
   }
@@ -122,51 +107,16 @@ const App: React.FC = () => {
     setSavedEncounters(prev => prev.filter(enc => enc.id !== encounterId))
   }
 
-  const calculateDifficulty = () => {
-    const party = combatants.filter(c => c.isPC)
-    const enemies = combatants.filter(c => !c.isPC)
-    
-    if (party.length === 0) return { difficulty: 'No Party', xp: 0 }
-    
-    const avgLevel = Math.round(party.reduce((sum, pc) => sum + (pc.level || 5), 0) / party.length)
-    const totalXP = enemies.reduce((sum, enemy) => sum + (enemy.xp || 0), 0)
-    
-    const thresholds = {
-      easy: 25 * party.length * avgLevel,
-      medium: 50 * party.length * avgLevel,
-      hard: 75 * party.length * avgLevel,
-      deadly: 100 * party.length * avgLevel
-    }
-    
-    let difficulty = 'trivial'
-    if (totalXP >= thresholds.deadly) difficulty = 'deadly'
-    else if (totalXP >= thresholds.hard) difficulty = 'hard'
-    else if (totalXP >= thresholds.medium) difficulty = 'medium'
-    else if (totalXP >= thresholds.easy) difficulty = 'easy'
-    
-    return { difficulty, xp: totalXP }
-  }
+  const rollAllInitiativeHandler = () => {
+    const updatedCombatants = rollAllInitiative(combatants);
+    setCombatants(updatedCombatants);
+  };
 
-  const rollInitiative = (id: string) => {
-    const roll = Math.floor(Math.random() * 20) + 1
-    const modifier = Math.floor(Math.random() * 4) + 1
-    setCombatants(prev => prev.map(c => 
-      c.id === id ? { ...c, initiative: roll + modifier } : c
-    ))
-  }
-
-  const rollAllInitiative = () => {
-    setCombatants(prev => prev.map(c => {
-      const roll = Math.floor(Math.random() * 20) + 1
-      const modifier = Math.floor(Math.random() * 4) + 1
-      return { ...c, initiative: roll + modifier }
-    }))
-  }
-
-  const sortByInitiative = () => {
-    setCombatants(prev => [...prev].sort((a, b) => b.initiative - a.initiative))
-    setCurrentTurn(0)
-  }
+  const sortByInitiativeHandler = () => {
+    const sortedCombatants = sortByInitiative(combatants);
+    setCombatants(sortedCombatants);
+    setCurrentTurn(0);
+  };
 
   const nextTurn = () => {
     if (combatants.length === 0) return
@@ -272,7 +222,7 @@ const App: React.FC = () => {
     setSelectedCombatant(selectedCombatant?.id === combatant.id ? null : combatant)
   }
 
-  const loadEncounter = (encounter: SavedEncounter) => {
+  const loadEncounter = (encounter: SavedEncounterType) => {
     // Ensure all numeric values are properly parsed when loading
     const fixedCombatants = encounter.combatants.map(c => ({
       ...c,
@@ -293,7 +243,7 @@ const App: React.FC = () => {
     setSelectedCombatant(null)
   }
 
-  const difficultyData = calculateDifficulty()
+  const difficultyData = calculateDifficulty(combatants)
 
   return (
     <div className="flex h-screen bg-dnd-primary">
@@ -343,11 +293,11 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <button onClick={rollAllInitiative} className="btn-dnd btn-dnd-warning flex items-center gap-2">
+            <button onClick={rollAllInitiativeHandler} className="btn-dnd btn-dnd-warning flex items-center gap-2">
               <Dice1 className="w-4 h-4" />
               Roll All
             </button>
-            <button onClick={sortByInitiative} className="btn-dnd btn-dnd-primary flex items-center gap-2">
+            <button onClick={sortByInitiativeHandler} className="btn-dnd btn-dnd-primary flex items-center gap-2">
               Sort Initiative
             </button>
             <button onClick={nextTurn} className="btn-dnd btn-dnd-danger flex items-center gap-2" disabled={combatants.length === 0}>
@@ -365,120 +315,19 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 scrollbar-dnd">
           <div className="space-y-2">
             {combatants.map((combatant, index) => (
-              <div
+              <CombatCard
                 key={combatant.id}
-                onClick={() => handleCombatantClick(combatant)}
-                className={`
-                  flex items-center rounded-2xl px-4 py-2 text-white font-sans gap-3 mb-2 transition-all duration-200 cursor-pointer hover:shadow-lg
-                  ${index === currentTurn
-                    ? 'bg-gray-900 border-2 border-red-400'
-                    : 'bg-gray-900 hover:bg-gray-800 border-2 border-transparent'
-                  }
-                  ${selectedCombatant?.id === combatant.id ? 'ring-2 ring-blue-500' : ''}
-                `}
-              >
-                {/* Initiative - Dice emoji + input without box */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🎲</span>
-                  <input
-                    type="number"
-                    value={combatant.initiative}
-                    onChange={(e) => updateCreature(combatant.id, 'initiative', parseInt(e.target.value) || 0)}
-                    className="bg-gray-800 border-none text-white font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-
-                {/* Combatant Info - Compact name with CR chip at end */}
-                <div className="flex-1 min-w-0">
-                  {/* Name row with CR chip at end */}
-                  <div className="flex items-center justify-between mb-1">
-                    <input
-                      type="text"
-                      value={combatant.name}
-                      onChange={(e) => updateCreature(combatant.id, 'name', e.target.value)}
-                      className="bg-transparent border-none text-white font-bold text-sm focus:outline-none flex-1 min-w-0 mr-1"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    {combatant.isPC ? (
-                      combatant.level && (
-                        <span className="bg-green-900 text-green-300 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1">
-                          Lvl {combatant.level}
-                        </span>
-                      )
-                    ) : (
-                      combatant.cr && (
-                        <span className="bg-amber-900 text-amber-300 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1">
-                          CR {combatant.cr}
-                        </span>
-                      )
-                    )}
-                  </div>
-
-                  {/* Conditions immediately below name */}
-                  <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
-                    <ConditionsTracker
-                      conditions={combatant.conditions}
-                      onAddCondition={(condition) => addCondition(combatant.id, condition)}
-                      onRemoveCondition={(index) => removeCondition(combatant.id, index)}
-                    />
-                  </div>
-                </div>
-
-                {/* HP and AC - Compact boxes like in image */}
-                <div className="flex items-center gap-3">
-                  {/* HP */}
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1 text-xs text-red-400 mb-1">
-                      <span>❤️</span>
-                      <span>HP</span>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openHPModal(combatant, e);
-                      }}
-                      className="bg-gray-800 hover:bg-gray-700 rounded px-2 py-1 text-center min-w-[60px] transition-colors"
-                      title="Manage HP"
-                    >
-                      <div className="text-white font-bold text-sm whitespace-nowrap">
-                        {parseInt(String(combatant.hp)) || 0}/{parseInt(String(combatant.maxHp)) || 0}
-                        {(parseInt(String(combatant.tempHp)) || 0) > 0 && (
-                          <span className="text-blue-400 ml-3"> +{parseInt(String(combatant.tempHp)) || 0}</span>
-                        )}
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* AC */}
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-center gap-1 text-xs text-blue-400 mb-1">
-                      <span>🛡️</span>
-                      <span>AC</span>
-                    </div>
-                    <div className="bg-gray-800 rounded px-2 py-1 w-10">
-                      <input
-                        type="number"
-                        value={combatant.ac}
-                        onChange={(e) => updateCreature(combatant.id, 'ac', parseInt(e.target.value) || 0)}
-                        className="bg-transparent border-none text-white font-bold text-center w-full text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Close Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeCreature(combatant.id);
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white rounded px-2 py-1 text-sm font-bold transition-colors"
-                >
-                  ×
-                </button>
-              </div>
+                combatant={combatant}
+                index={index}
+                currentTurn={currentTurn}
+                onUpdateCreature={updateCreature}
+                onRemoveCreature={removeCreature}
+                onAddCondition={addCondition}
+                onRemoveCondition={removeCondition}
+                onOpenHPModal={openHPModal}
+                onHandleCombatantClick={handleCombatantClick}
+                selectedCombatant={selectedCombatant}
+              />
             ))}
           </div>
 
