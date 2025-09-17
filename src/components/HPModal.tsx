@@ -74,12 +74,41 @@ export const HPModal: React.FC<HPModalProps> = ({
     }
   };
 
-  const modalStyle = position ? {
-    position: 'absolute' as const,
-    left: position.x,
-    top: position.y + 10, // 10px below the button
-    transform: 'none',
-  } : {
+  const calculatePosition = () => {
+    if (!position) return {};
+
+    const modalWidth = 280;
+    const modalHeight = 200; // Approximate height
+    const padding = 10;
+
+    let left = position.x;
+    let top = position.y + padding;
+
+    // Adjust if modal would go off-screen horizontally
+    if (left + modalWidth > window.innerWidth) {
+      left = window.innerWidth - modalWidth - padding;
+    }
+    if (left < padding) {
+      left = padding;
+    }
+
+    // Adjust if modal would go off-screen vertically
+    if (top + modalHeight > window.innerHeight) {
+      top = position.y - modalHeight - padding; // Show above the button instead
+    }
+    if (top < padding) {
+      top = padding;
+    }
+
+    return {
+      position: 'fixed' as const,
+      left: `${left}px`,
+      top: `${top}px`,
+      transform: 'none',
+    };
+  };
+
+  const modalStyle = position ? calculatePosition() : {
     position: 'fixed' as const,
     top: '50%',
     left: '50%',
@@ -88,7 +117,7 @@ export const HPModal: React.FC<HPModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center"
+      className="fixed inset-0 bg-black bg-opacity-50 z-[1000]"
       onClick={handleClickOutside}
     >
       <div
