@@ -4,7 +4,10 @@
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
       "Bash(git restore:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm start)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

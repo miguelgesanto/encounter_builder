@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Dice1, Play, Heart, Shield, User, Swords } from 'lucide-react'
+import { Plus, Dice1, Play, Heart, Shield, User, Swords, Lightbulb } from 'lucide-react'
 import { CreatureBrowser } from './components/CreatureBrowser'
 import { Sidebar } from './components/Sidebar'
 import { ConditionsTracker } from './components/ConditionsTracker'
@@ -9,10 +9,12 @@ import { SaveLoadManager, SavedEncounter } from './components/SaveLoadManager'
 import { HPModal } from './components/HPModal'
 import { QuickAddModal } from './components/QuickAddModal'
 import CombatCard from './components/CombatCard'
+import DMReminderCard from './components/DMReminderCard'
 import { Combatant, SavedEncounter as SavedEncounterType } from './types/combatant'
 import { STORAGE_KEYS } from './constants/ui'
 import { useInitiative } from './hooks/useInitiative'
 import { useEncounterBalance } from './hooks/useEncounterBalance'
+import { checkForLairActions, getCurrentCreature, hasActiveReminders } from './utils/reminder-logic'
 
 const App: React.FC = () => {
   const { rollInitiative, rollAllInitiative, sortByInitiative } = useInitiative();
@@ -46,6 +48,51 @@ const App: React.FC = () => {
       conditions: [],
       tempHp: parseInt('0')
     },
+    {
+      id: '3',
+      name: 'Ancient Red Dragon',
+      hp: parseInt('546'),
+      maxHp: parseInt('546'),
+      ac: parseInt('22'),
+      initiative: parseInt('20'),
+      isPC: false,
+      conditions: [],
+      cr: '24',
+      type: 'dragon',
+      environment: 'mountain',
+      xp: parseInt('62000'),
+      tempHp: parseInt('0')
+    },
+    {
+      id: '4',
+      name: 'Lich',
+      hp: parseInt('135'),
+      maxHp: parseInt('135'),
+      ac: parseInt('17'),
+      initiative: parseInt('14'),
+      isPC: false,
+      conditions: [],
+      cr: '21',
+      type: 'undead',
+      environment: 'dungeon',
+      xp: parseInt('33000'),
+      tempHp: parseInt('0')
+    },
+    {
+      id: '5',
+      name: 'Troll',
+      hp: parseInt('84'),
+      maxHp: parseInt('84'),
+      ac: parseInt('15'),
+      initiative: parseInt('8'),
+      isPC: false,
+      conditions: [],
+      cr: '5',
+      type: 'giant',
+      environment: 'swamp',
+      xp: parseInt('1800'),
+      tempHp: parseInt('0')
+    },
   ])
   const [currentTurn, setCurrentTurn] = useState(0)
   const [round, setRound] = useState(1)
@@ -62,6 +109,8 @@ const App: React.FC = () => {
   const [showLoadDialog, setShowLoadDialog] = useState(false)
   const [saveEncounterName, setSaveEncounterName] = useState('')
   const [savedEncounters, setSavedEncounters] = useState<SavedEncounterType[]>([])
+  const [showReminders, setShowReminders] = useState(true)
+  const [activeReminders, setActiveReminders] = useState<Combatant[]>([])
 
   // Load saved encounters from localStorage on mount
   useEffect(() => {
@@ -79,6 +128,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.SAVED_ENCOUNTERS, JSON.stringify(savedEncounters))
   }, [savedEncounters])
+
+  // Update reminders when combatants change or reminders setting changes
+  useEffect(() => {
+    updateReminders(currentTurn, round)
+  }, [combatants, showReminders, currentTurn, round])
 
   const saveEncounter = () => {
     if (!saveEncounterName.trim()) return
@@ -121,11 +175,54 @@ const App: React.FC = () => {
   const nextTurn = () => {
     if (combatants.length === 0) return
     let nextIndex = currentTurn + 1
+    let nextRound = round
     if (nextIndex >= combatants.length) {
       nextIndex = 0
-      setRound(prev => prev + 1)
+      nextRound = round + 1
+      setRound(nextRound)
     }
     setCurrentTurn(nextIndex)
+
+    // Update reminders after turn change
+    updateReminders(nextIndex, nextRound)
+  }
+
+  // New reminder update function
+  const updateReminders = (turnIndex: number, currentRound: number) => {
+    if (!showReminders || combatants.length === 0) {
+      setActiveReminders([])
+      return
+    }
+
+    const currentCreature = getCurrentCreature(combatants, turnIndex)
+    if (!currentCreature) {
+      setActiveReminders([])
+      return
+    }
+
+    const initiative = currentCreature.initiative
+
+    // Check for lair actions first (highest priority) - at top of round
+    const lairCreatures = checkForLairActions(initiative, combatants)
+    if (lairCreatures.length > 0) {
+      setActiveReminders(lairCreatures)
+      return
+    }
+
+    // Check for creature-specific reminders
+    if (hasActiveReminders(currentCreature, turnIndex, initiative, combatants)) {
+      setActiveReminders([currentCreature])
+    } else {
+      // Check for legendary actions for other creatures
+      const legendaryCreatures = combatants.filter(creature =>
+        creature.id !== currentCreature.id && hasActiveReminders(creature, turnIndex, initiative, combatants)
+      )
+      if (legendaryCreatures.length > 0) {
+        setActiveReminders(legendaryCreatures.slice(0, 1)) // Show only one at a time
+      } else {
+        setActiveReminders([])
+      }
+    }
   }
 
   const openHPModal = (combatant: Combatant, event: React.MouseEvent) => {
@@ -300,12 +397,22 @@ const App: React.FC = () => {
             <button onClick={sortByInitiativeHandler} className="btn-dnd btn-dnd-primary flex items-center gap-2">
               Sort Initiative
             </button>
-            <button onClick={nextTurn} className="btn-dnd btn-dnd-danger flex items-center gap-2" disabled={combatants.length === 0}>
+            <button onClick={nextTurn} className="btn-dnd btn-dnd-warning flex items-center gap-2" disabled={combatants.length === 0}>
               <Play className="w-4 h-4" />
               Next Turn
             </button>
-            <button onClick={() => { setRound(1); setCurrentTurn(0) }} className="btn-dnd flex items-center gap-2">
+            <button onClick={() => { setRound(1); setCurrentTurn(0); setActiveReminders([]) }} className="btn-dnd btn-dnd-secondary flex items-center gap-2">
               Reset
+            </button>
+            <button
+              onClick={() => setShowReminders(!showReminders)}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
+                showReminders ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+              title="Toggle DM Reminders"
+            >
+              <Lightbulb className="w-4 h-4" />
+              DM Reminders
             </button>
           </div>
         </div>
@@ -313,6 +420,19 @@ const App: React.FC = () => {
 
         {/* Initiative List */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-dnd">
+          {/* DM Reminder Cards */}
+          {showReminders && activeReminders.map(creature => (
+            <DMReminderCard
+              key={`reminder-${creature.id}`}
+              creature={creature}
+              currentTurn={currentTurn}
+              round={round}
+              initiative={creature.initiative}
+              onDismiss={() => setActiveReminders([])}
+              allCombatants={combatants}
+            />
+          ))}
+
           <div className="space-y-2">
             {combatants.map((combatant, index) => (
               <CombatCard
@@ -343,7 +463,7 @@ const App: React.FC = () => {
           <div className="text-center pt-4">
             <button
               onClick={() => setShowQuickAddModal(true)}
-              className="btn-dnd btn-dnd-primary px-6 py-3 text-lg flex items-center gap-2 mx-auto"
+              className="btn-dnd btn-dnd-success px-6 py-3 text-lg flex items-center gap-2 mx-auto"
               title="Add new combatant"
             >
               <Plus className="w-5 h-5" />
@@ -387,14 +507,14 @@ const App: React.FC = () => {
       {/* Save Dialog */}
       {showSaveDialog && (
         <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-70 backdrop-blur-sm">
-          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 w-96 mx-4 shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4 text-white">Save Encounter</h3>
+          <div className="bg-white border border-gray-300 rounded-lg p-6 w-96 mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Save Encounter</h3>
             <input
               type="text"
               placeholder="Enter encounter name..."
               value={saveEncounterName}
               onChange={(e) => setSaveEncounterName(e.target.value)}
-              className="w-full bg-gray-700 text-white px-3 py-2 mb-4 rounded border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-50 text-gray-900 px-3 py-2 mb-4 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               autoFocus
             />
             <div className="flex gap-2 justify-end">
@@ -403,14 +523,14 @@ const App: React.FC = () => {
                   setShowSaveDialog(false)
                   setSaveEncounterName('')
                 }}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
+                className="btn-dnd btn-dnd-secondary px-4 py-2 rounded transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEncounter}
                 disabled={!saveEncounterName.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-dnd btn-dnd-primary px-4 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Save
               </button>
@@ -422,30 +542,30 @@ const App: React.FC = () => {
       {/* Load Dialog */}
       {showLoadDialog && (
         <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black bg-opacity-70 backdrop-blur-sm">
-          <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 w-96 max-h-96 overflow-hidden mx-4 shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4 text-white">Load Encounter</h3>
+          <div className="bg-white border border-gray-300 rounded-lg p-6 w-96 max-h-96 overflow-hidden mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Load Encounter</h3>
             <div className="max-h-64 overflow-y-auto space-y-2">
               {savedEncounters.length === 0 ? (
-                <div className="text-gray-400 text-center py-8">No saved encounters</div>
+                <div className="text-gray-500 text-center py-8">No saved encounters</div>
               ) : (
                 savedEncounters.map((encounter) => (
-                  <div key={encounter.id} className="flex items-center justify-between p-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                  <div key={encounter.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
-                      <div className="font-medium text-white">{encounter.name}</div>
-                      <div className="text-sm text-gray-400">
+                      <div className="font-medium text-gray-900">{encounter.name}</div>
+                      <div className="text-sm text-gray-600">
                         {encounter.combatants.length} combatants • Round {encounter.round} • {new Date(encounter.savedAt).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="flex gap-1">
                       <button
                         onClick={() => loadSavedEncounter(encounter)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 text-sm rounded transition-colors"
+                        className="btn-dnd btn-dnd-primary px-2 py-1 text-sm rounded transition-colors"
                       >
                         Load
                       </button>
                       <button
                         onClick={() => deleteEncounter(encounter.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-sm rounded transition-colors"
+                        className="btn-dnd btn-dnd-danger px-2 py-1 text-sm rounded transition-colors"
                         title="Delete encounter"
                       >
                         ×
@@ -458,7 +578,7 @@ const App: React.FC = () => {
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowLoadDialog(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors"
+                className="btn-dnd btn-dnd-secondary px-4 py-2 rounded transition-colors"
               >
                 Close
               </button>
