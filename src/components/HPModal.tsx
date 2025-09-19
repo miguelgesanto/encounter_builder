@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Minus } from 'lucide-react';
 
 interface HPModalProps {
@@ -28,6 +28,17 @@ export const HPModal: React.FC<HPModalProps> = ({
   const [damageAmount, setDamageAmount] = useState('');
   const [healAmount, setHealAmount] = useState('');
 
+  const damageInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus damage input when modal opens
+  useEffect(() => {
+    if (isOpen && damageInputRef.current) {
+      setTimeout(() => {
+        damageInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleDamage = () => {
@@ -49,17 +60,20 @@ export const HPModal: React.FC<HPModalProps> = ({
         newCurrentHp = Math.max(0, newCurrentHp - damage);
       }
 
-      setCurrentHp(newCurrentHp);
-      setTempHp(newTempHp);
-      setDamageAmount('');
+      // Update and save immediately
+      onUpdateHP(combatant.id, newCurrentHp, maxHp, newTempHp);
+      onClose();
     }
   };
 
   const handleHeal = () => {
     const heal = parseInt(healAmount) || 0;
     if (heal > 0) {
-      setCurrentHp(Math.min(maxHp, currentHp + heal));
-      setHealAmount('');
+      const newCurrentHp = Math.min(maxHp, currentHp + heal);
+
+      // Update and save immediately
+      onUpdateHP(combatant.id, newCurrentHp, maxHp, tempHp);
+      onClose();
     }
   };
 
@@ -121,115 +135,131 @@ export const HPModal: React.FC<HPModalProps> = ({
       onClick={handleClickOutside}
     >
       <div
-        className="bg-dnd-elevated border border-dnd rounded-lg p-3 shadow-xl"
+        className="bg-white border border-gray-300 rounded-lg p-4 shadow-xl"
         style={{
           ...modalStyle,
-          width: '280px',
-          minHeight: '180px'
+          width: '320px',
+          minHeight: '200px'
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="text-sm font-medium text-dnd-primary mb-2 text-center">
+        <div className="text-lg font-medium text-gray-900 mb-4 text-center">
           {combatant.name}
         </div>
 
-        {/* Current Stats */}
-        <div className="text-center mb-3">
-          <div className="text-lg font-bold text-dnd-primary">
-            {currentHp + tempHp} / {maxHp}
+        {/* Quick Action Buttons */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="flex items-center gap-1">
+            <input
+              ref={damageInputRef}
+              type="text"
+              placeholder="Dmg"
+              value={damageAmount}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only allow integers
+                if (value === '' || /^\d+$/.test(value)) {
+                  setDamageAmount(value);
+                }
+              }}
+              className="input-dnd w-16 text-center py-2"
+              onKeyPress={(e) => e.key === 'Enter' && handleDamage()}
+            />
+            <button
+              onClick={handleDamage}
+              className="btn-dnd btn-dnd-danger px-2 py-1 text-sm font-bold flex items-center justify-center flex-1"
+              title="Apply damage"
+            >
+              −
+            </button>
           </div>
-          {tempHp > 0 && (
-            <div className="text-xs text-blue-400">+{tempHp} temp</div>
-          )}
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              placeholder="Heal"
+              value={healAmount}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only allow integers
+                if (value === '' || /^\d+$/.test(value)) {
+                  setHealAmount(value);
+                }
+              }}
+              className="input-dnd w-16 text-center py-2"
+              onKeyPress={(e) => e.key === 'Enter' && handleHeal()}
+            />
+            <button
+              onClick={handleHeal}
+              className="btn-dnd btn-dnd-success px-2 py-1 text-sm font-bold flex items-center justify-center flex-1"
+              title="Apply healing"
+            >
+              +
+            </button>
+          </div>
         </div>
 
-        {/* HP Inputs - Compact Row */}
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        {/* HP Inputs */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
           <div>
-            <label className="block text-xs text-dnd-muted mb-1">HP</label>
+            <label className="block text-sm text-gray-600 mb-1 text-center">HP</label>
             <input
-              type="number"
+              type="text"
               value={currentHp}
-              onChange={(e) => setCurrentHp(Math.max(0, parseInt(e.target.value) || 0))}
-              className="input-dnd w-full text-xs p-1 text-center"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  setCurrentHp(Math.max(0, parseInt(value) || 0));
+                }
+              }}
+              className="input-dnd w-full text-center py-2"
               min="0"
               max={maxHp}
             />
           </div>
           <div>
-            <label className="block text-xs text-dnd-muted mb-1">Max</label>
+            <label className="block text-sm text-gray-600 mb-1 text-center">Max</label>
             <input
-              type="number"
+              type="text"
               value={maxHp}
-              onChange={(e) => setMaxHp(Math.max(1, parseInt(e.target.value) || 1))}
-              className="input-dnd w-full text-xs p-1 text-center"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  setMaxHp(Math.max(1, parseInt(value) || 1));
+                }
+              }}
+              className="input-dnd w-full text-center py-2"
               min="1"
             />
           </div>
           <div>
-            <label className="block text-xs text-dnd-muted mb-1">Temp</label>
+            <label className="block text-sm text-gray-600 mb-1 text-center">Temp</label>
             <input
-              type="number"
+              type="text"
               value={tempHp}
-              onChange={(e) => setTempHp(Math.max(0, parseInt(e.target.value) || 0))}
-              className="input-dnd w-full text-xs p-1 text-center"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  setTempHp(Math.max(0, parseInt(value) || 0));
+                }
+              }}
+              className="input-dnd w-full text-center py-2"
               min="0"
             />
           </div>
         </div>
 
-        {/* Quick Actions - Compact */}
-        <div className="grid grid-cols-2 gap-1 mb-3">
-          <div className="flex gap-1">
-            <input
-              type="number"
-              placeholder="Dmg"
-              value={damageAmount}
-              onChange={(e) => setDamageAmount(e.target.value)}
-              className="input-dnd text-xs p-1 w-16"
-              min="0"
-              onKeyPress={(e) => e.key === 'Enter' && handleDamage()}
-            />
-            <button
-              onClick={handleDamage}
-              className="btn-dnd btn-dnd-danger px-1 py-1 text-xs"
-              title="Apply damage"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="flex gap-1">
-            <input
-              type="number"
-              placeholder="Heal"
-              value={healAmount}
-              onChange={(e) => setHealAmount(e.target.value)}
-              className="input-dnd text-xs p-1 w-16"
-              min="0"
-              onKeyPress={(e) => e.key === 'Enter' && handleHeal()}
-            />
-            <button
-              onClick={handleHeal}
-              className="btn-dnd btn-dnd-success px-1 py-1 text-xs"
-              title="Apply healing"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-
-        {/* Action Buttons - Compact */}
-        <div className="flex gap-2 justify-center">
+        {/* Action Buttons */}
+        <div className="flex gap-3 justify-center">
           <button
             onClick={onClose}
-            className="btn-dnd px-3 py-1 text-xs"
+            className="btn-dnd btn-dnd-secondary px-6 py-2"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="btn-dnd btn-dnd-primary px-3 py-1 text-xs"
+            className="btn-dnd btn-dnd-warning px-6 py-2"
           >
             Save
           </button>

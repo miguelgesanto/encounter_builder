@@ -4,47 +4,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Custom Properties for D&D Dark Theme - Unified Color System */
+/* CSS Custom Properties for D&D Light Theme - NEW Color System */
 :root {
-  /* Primary Background Colors - Dark Blue Theme */
-  --color-bg-primary: #0f0f12;        /* Deep dark blue-black */
-  --color-bg-secondary: #1a1b23;      /* Dark slate */
-  --color-bg-elevated: #242631;       /* Elevated surfaces */
-  --color-bg-hover: #2d2f3d;         /* Hover states */
-  --color-bg-card: #1e1f2a;          /* Card backgrounds */
+  /* Primary Background Colors - Light Theme */
+  --color-bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+  --color-bg-secondary: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  --color-bg-elevated: #ffffff;       /* Pure white for elevated surfaces */
+  --color-bg-hover: #f1f5f9;         /* Light hover states */
+  --color-bg-card: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   
-  /* Text Colors - Consistent White/Gray Scale */
-  --color-text-primary: #ffffff;      /* Pure white for main text */
-  --color-text-secondary: #d1d5db;    /* Light gray for secondary text */
-  --color-text-muted: #9ca3af;        /* Muted text, labels */
-  --color-text-inverse: #1a1b23;      /* Text on light backgrounds */
+  /* Text Colors - Dark Text for Light Theme */
+  --color-text-primary: #1f2937;      /* Dark gray for main text */
+  --color-text-secondary: #374151;    /* Medium gray for secondary text */
+  --color-text-muted: #6b7280;        /* Lighter gray for muted text */
+  --color-text-inverse: #ffffff;      /* White text on dark backgrounds */
   
-  /* Combat State Colors - High Contrast */
-  --color-combat-current-turn: #ef4444;    /* Bright red for current turn */
-  --color-combat-player-character: #10b981; /* Bright green for PCs */
-  --color-combat-monster: #f59e0b;         /* Amber for monsters */
+  /* Combat State Colors - NEW Functional Color System */
+  --color-combat-current-turn: #f59e0b;    /* Orange for current turn */
+  --color-combat-player-character: #0ea5e9; /* Blue for PCs */
+  --color-combat-monster: #dc2626;         /* Red for monsters */
   --color-combat-unconscious: #7f1d1d;     /* Dark red for unconscious */
   --color-combat-dead: #450a0a;            /* Very dark red for dead */
+
+  /* PC Theme Colors - Blue */
+  --color-pc-border: #0ea5e9;
+  --color-pc-background: linear-gradient(to-br, #f0f9ff, #fef3c7);
+  --color-pc-badge: linear-gradient(135deg, #10b981, #059669);
+
+  /* Monster Theme Colors - Red */
+  --color-monster-border: #dc2626;
+  --color-monster-background: linear-gradient(to-br, #fef2f2, #fef3c7);
+  --color-monster-badge: linear-gradient(135deg, #dc2626, #b91c1c);
+
+  /* Current Turn - Orange Glow */
+  --color-current-turn-border: #f59e0b;
+  --color-current-turn-shadow: rgba(245, 158, 11, 0.3);
+
+  /* HP Status Colors - NEW System */
+  --color-hp-healthy: #22c55e;     /* Green (75-100%) */
+  --color-hp-wounded: #eab308;     /* Yellow (25-75%) */
+  --color-hp-critical: #dc2626;    /* Red (0-25%) */
+  --color-hp-temporary: #06b6d4;   /* Cyan for temp HP */
   
-  /* Condition Colors - Consistent with Combat */
-  --color-conditions-negative: #ef4444;    /* Red for harmful */
-  --color-conditions-positive: #10b981;    /* Green for beneficial */
-  --color-conditions-neutral: #f59e0b;     /* Amber for neutral */
-  --color-conditions-concentration: #8b5cf6; /* Purple for concentration */
+  /* Condition Colors - Muted Functional System */
+  --color-conditions-harmful: #c53030;     /* Muted red for harmful */
+  --color-conditions-beneficial: #38a169;  /* Muted green for beneficial */
+  --color-conditions-neutral: #718096;     /* Muted gray for neutral */
+  --color-conditions-concentration: #805ad5; /* Muted purple for concentration */
+
+  /* Functional Button Colors - Muted/Desaturated */
+  --color-button-primary: linear-gradient(135deg, #d69e2e, #b7791f);    /* Muted amber - main actions */
+  --color-button-secondary: linear-gradient(135deg, #718096, #4a5568);  /* Muted gray */
+  --color-button-success: linear-gradient(135deg, #38a169, #2f855a);    /* Muted green - add actions */
+  --color-button-danger: linear-gradient(135deg, #c53030, #9c2626);     /* Muted red - remove actions */
+  --color-button-warning: linear-gradient(135deg, #d69e2e, #b7791f);    /* Muted yellow-orange */
   
-  /* Difficulty Colors - Consistent Scale */
-  --color-difficulty-trivial: #9ca3af;     /* Gray */
-  --color-difficulty-easy: #10b981;        /* Green */
-  --color-difficulty-medium: #f59e0b;      /* Amber */
-  --color-difficulty-hard: #ef4444;        /* Red */
-  --color-difficulty-deadly: #7f1d1d;      /* Dark red */
+  /* Difficulty Colors - NEW Consistent Scale */
+  --color-difficulty-trivial: #22c55e;     /* Green */
+  --color-difficulty-easy: #84cc16;        /* Light green */
+  --color-difficulty-medium: #eab308;      /* Yellow */
+  --color-difficulty-hard: #f97316;        /* Orange */
+  --color-difficulty-deadly: #dc2626;      /* Red */
   
-  /* UI Colors - Consistent with Background */
-  --color-ui-border: #374151;              /* Medium gray borders */
+  /* UI Colors - Light Theme Adjustments */
+  --color-ui-border: #d1d5db;              /* Light gray borders */
   --color-ui-border-focus: #3b82f6;        /* Blue focus */
-  --color-ui-input: #1f2937;               /* Dark input backgrounds */
-  --color-ui-button: #374151;              /* Button backgrounds */
-  --color-ui-button-hover: #4b5563;        /* Button hover */
+  --color-ui-input: #f9fafb;               /* Light input backgrounds */
+  --color-ui-button: #f3f4f6;              /* Light button backgrounds */
+  --color-ui-button-hover: #e5e7eb;        /* Light button hover */
   --color-ui-button-primary: #3b82f6;      /* Primary button blue */
   --color-ui-button-primary-hover: #2563eb; /* Primary button hover */
   --color-ui-button-success: #10b981;      /* Success green */
@@ -97,7 +124,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-bg-primary);
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   overflow-x: hidden;
 }
@@ -159,12 +186,12 @@ input::placeholder, textarea::placeholder {
 
 /* Enhanced Tailwind utilities for D&D theme - Consistent Color System */
 @layer utilities {
-  /* Background utilities - Consistent with CSS variables */
-  .bg-dnd-primary { background-color: var(--color-bg-primary); }
-  .bg-dnd-secondary { background-color: var(--color-bg-secondary); }
+  /* Background utilities - Light theme gradients */
+  .bg-dnd-primary { background: var(--color-bg-primary); }
+  .bg-dnd-secondary { background: var(--color-bg-secondary); }
   .bg-dnd-elevated { background-color: var(--color-bg-elevated); }
   .bg-dnd-hover { background-color: var(--color-bg-hover); }
-  .bg-dnd-card { background-color: var(--color-bg-card); }
+  .bg-dnd-card { background: var(--color-bg-card); }
 
   /* Text utilities - Consistent white/gray scale */
   .text-dnd-primary { color: var(--color-text-primary) !important; }
@@ -175,40 +202,46 @@ input::placeholder, textarea::placeholder {
   .border-dnd { border-color: var(--color-ui-border); }
   .border-dnd-focus { border-color: var(--color-ui-border-focus); }
   
-  /* Combat state utilities - High contrast colors */
+  /* Combat state utilities - NEW Functional Colors */
   .bg-current-turn {
-    background-color: rgba(239, 68, 68, 0.15);
-    border-color: var(--color-combat-current-turn);
-    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
+    border: 3px solid var(--color-current-turn-border);
+    box-shadow: 0 0 20px var(--color-current-turn-shadow);
+    animation: currentTurnPulse 2s ease-in-out infinite;
   }
-  
+
+  @keyframes currentTurnPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px var(--color-current-turn-shadow);
+    }
+    50% {
+      box-shadow: 0 0 30px var(--color-current-turn-shadow), 0 0 40px rgba(245, 158, 11, 0.2);
+    }
+  }
+
   .bg-player-character {
-    background-color: rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.4);
+    background: var(--color-pc-background);
+    border-left: 4px solid var(--color-pc-border);
   }
-  
+
   .bg-monster {
-    background-color: var(--color-bg-elevated);
-    border-color: var(--color-ui-border);
+    background: var(--color-monster-background);
+    border-left: 4px solid var(--color-monster-border);
   }
   
-  /* Condition utilities - Consistent with combat colors */
-  .condition-negative {
-    background-color: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.4);
-    color: var(--color-conditions-negative);
+  /* Condition utilities - Muted Color System */
+  .condition-harmful {
+    background: linear-gradient(135deg, #c53030, #9c2626);
+    color: var(--color-text-inverse);
   }
-  
-  .condition-positive {
-    background-color: rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.4);
-    color: var(--color-conditions-positive);
+
+  .condition-beneficial {
+    background: linear-gradient(135deg, #38a169, #2f855a);
+    color: var(--color-text-inverse);
   }
-  
+
   .condition-neutral {
-    background-color: rgba(245, 158, 11, 0.15);
-    border-color: rgba(245, 158, 11, 0.4);
-    color: var(--color-conditions-neutral);
+    background: linear-gradient(135deg, #718096, #4a5568);
+    color: var(--color-text-inverse);
   }
   
   .condition-concentration {
@@ -262,49 +295,35 @@ input::placeholder, textarea::placeholder {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
   }
   
-  /* Button variants - Consistent color scheme */
+  /* Button variants - NEW Functional Color System */
   .btn-dnd-primary {
-    background-color: var(--color-ui-button-primary);
-    border-color: var(--color-ui-button-primary);
+    background: var(--color-button-primary);
+    border: none;
     color: white;
   }
-  
-  .btn-dnd-primary:hover {
-    background-color: var(--color-ui-button-primary-hover);
-    border-color: var(--color-ui-button-primary-hover);
+
+  .btn-dnd-secondary {
+    background: var(--color-button-secondary);
+    border: none;
+    color: white;
   }
-  
+
   .btn-dnd-success {
-    background-color: var(--color-ui-button-success);
-    border-color: var(--color-ui-button-success);
+    background: var(--color-button-success);
+    border: none;
     color: white;
   }
-  
-  .btn-dnd-success:hover {
-    background-color: var(--color-ui-button-success-hover);
-    border-color: var(--color-ui-button-success-hover);
-  }
-  
-  .btn-dnd-warning {
-    background-color: var(--color-ui-button-warning);
-    border-color: var(--color-ui-button-warning);
-    color: white;
-  }
-  
-  .btn-dnd-warning:hover {
-    background-color: var(--color-ui-button-warning-hover);
-    border-color: var(--color-ui-button-warning-hover);
-  }
-  
+
   .btn-dnd-danger {
-    background-color: var(--color-ui-button-danger);
-    border-color: var(--color-ui-button-danger);
+    background: var(--color-button-danger);
+    border: none;
     color: white;
   }
-  
-  .btn-dnd-danger:hover {
-    background-color: var(--color-ui-button-danger-hover);
-    border-color: var(--color-ui-button-danger-hover);
+
+  .btn-dnd-warning {
+    background: var(--color-button-warning);
+    border: none;
+    color: white;
   }
   
   /* Input styles - Consistent with design system */

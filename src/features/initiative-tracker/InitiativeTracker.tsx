@@ -288,19 +288,19 @@ export const InitiativeTracker: React.FC<InitiativeTrackerProps> = ({ encounter 
                 </button>
               </div>
 
-                {/* Notes (when selected) */}
-                {selectedCombatantId === combatant.id && (
-                  <div className="mt-3 pt-3 border-t border-dnd">
-                    <textarea
-                      placeholder="Combat notes..."
-                      value={combatant.notes || ''}
-                      onChange={(e) => updateCombatant(combatant.id, { notes: e.target.value })}
-                      className="input-dnd w-full h-16 p-2 text-sm resize-none"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Notes (when selected) */}
+              {selectedCombatantId === combatant.id && (
+                <div className="mt-3 pt-3 border-t border-dnd">
+                  <textarea
+                    placeholder="Combat notes..."
+                    value={combatant.notes || ''}
+                    onChange={(e) => updateCombatant(combatant.id, { notes: e.target.value })}
+                    className="input-dnd w-full h-16 p-2 text-sm resize-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              )}
+            </div>
             ))}
           </div>
         )}

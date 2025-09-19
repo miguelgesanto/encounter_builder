@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { AlertCircle, X, Plus } from 'lucide-react'
 
-// D&D 5e conditions with descriptions
+// D&D 5e conditions with descriptions and categories
 export const CONDITIONS = {
   'Blinded': "Can't see. Attacks against you have Advantage; your attacks have Disadvantage.",
   'Charmed': "Can't attack the charmer or target them with harmful abilities.",
@@ -19,6 +19,31 @@ export const CONDITIONS = {
   'Unconscious': "Incapacitated, can't move/speak, unaware of surroundings.",
   'Exhaustion': "Levels 1-6: Disadvantage on rolls, speed reduction, death.",
   'Concentration': "Maintaining a spell. Can be broken by damage."
+}
+
+// Condition categories for color coding
+export const CONDITION_CATEGORIES = {
+  harmful: ['Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Exhaustion'],
+  beneficial: ['Invisible'],
+  neutral: ['Concentration']
+}
+
+// Helper function to get condition type
+const getConditionType = (conditionName: string): 'harmful' | 'beneficial' | 'neutral' => {
+  if (CONDITION_CATEGORIES.harmful.includes(conditionName)) return 'harmful';
+  if (CONDITION_CATEGORIES.beneficial.includes(conditionName)) return 'beneficial';
+  return 'neutral';
+}
+
+// Helper function to get condition styling
+const getConditionStyling = (conditionName: string): string => {
+  const type = getConditionType(conditionName);
+  switch (type) {
+    case 'harmful': return 'condition-harmful';
+    case 'beneficial': return 'condition-beneficial';
+    case 'neutral': return 'condition-neutral';
+    default: return 'condition-harmful';
+  }
 }
 
 interface Condition {
@@ -52,11 +77,11 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       {conditions.map((condition, index) => (
         <div
           key={index}
-          className="bg-red-900 text-red-300 px-2 py-1 rounded text-xs cursor-pointer hover:bg-red-800 transition-colors flex items-center gap-1"
+          className={`${getConditionStyling(condition.name)} px-2 py-1 rounded text-xs cursor-pointer transition-colors flex items-center gap-1`}
           title={CONDITIONS[condition.name as keyof typeof CONDITIONS] || 'Unknown condition'}
           onClick={() => onRemoveCondition(index)}
         >
-          <span>⚠️</span>
+          <span>{getConditionType(condition.name) === 'beneficial' ? '✨' : getConditionType(condition.name) === 'neutral' ? '⚪' : '⚠️'}</span>
           <span>{condition.name}</span>
           {condition.duration && (
             <span className="opacity-75">({condition.duration})</span>
@@ -69,7 +94,7 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="bg-transparent border border-gray-600 text-gray-400 px-2 py-1 rounded text-xs flex items-center gap-1 hover:border-gray-500 transition-colors"
+          className="bg-white border border-gray-300 text-gray-600 px-2 py-1 rounded text-xs flex items-center gap-1 hover:border-gray-400 transition-colors"
         >
           <Plus className="w-3 h-3" />
           Condition
@@ -84,15 +109,15 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
             />
 
             {/* Dropdown Menu */}
-            <div className="absolute top-full left-0 mt-1 w-64 bg-gray-800 border border-gray-600 rounded-lg z-20 shadow-lg">
+            <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg z-20 shadow-lg">
               {/* Search Input */}
-              <div className="p-2 border-b border-gray-600">
+              <div className="p-2 border-b border-gray-300">
                 <input
                   type="text"
                   placeholder="Search conditions..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-700 text-white text-sm px-3 py-1 rounded border-none focus:outline-none focus:ring-1 focus:ring-gray-500"
+                  className="w-full bg-gray-50 text-gray-900 text-sm px-3 py-1 rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
@@ -108,11 +133,11 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
                         setShowDropdown(false)
                         setSearchTerm('')
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-700 transition-colors border-none"
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors border-none"
                       title={description}
                     >
-                      <div className="font-medium text-sm text-white">{conditionName}</div>
-                      <div className="text-xs text-gray-400 truncate">{description}</div>
+                      <div className="font-medium text-sm text-gray-900">{conditionName}</div>
+                      <div className="text-xs text-gray-600 truncate">{description}</div>
                     </button>
                   ))
                 ) : (

@@ -31,6 +31,20 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
 }) => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  // Helper function to determine HP status color
+  const getHPStatusColor = (hp: number, maxHp: number) => {
+    const percentage = (hp / maxHp) * 100;
+    if (percentage >= 75) return 'text-green-600'; // Healthy
+    if (percentage >= 25) return 'text-yellow-600'; // Wounded
+    return 'text-red-600'; // Critical
+  };
+
+  const getHPStatusClass = (hp: number, maxHp: number) => {
+    const percentage = (hp / maxHp) * 100;
+    if (percentage < 25) return 'animate-pulse'; // Pulse for critical
+    return '';
+  };
+
   // Create validated update handlers
   const handleInitiativeUpdate = (value: string) => {
     const validation = validateInitiative(value);
@@ -66,10 +80,10 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
       key={combatant.id}
       onClick={() => onHandleCombatantClick(combatant)}
       className={`
-        flex items-center rounded-2xl px-4 py-2 text-white font-sans gap-3 mb-2
+        flex items-center rounded-2xl px-4 py-2 font-sans gap-3 mb-2 border
         cursor-pointer hover:shadow-lg ${ANIMATION.TRANSITION}
-        bg-gray-900 hover:bg-gray-800
-        ${index === currentTurn ? 'border-2 border-blue-500' : 'border-2 border-transparent'}
+        ${combatant.isPC ? 'bg-player-character text-gray-900 border-blue-200' : 'bg-monster text-gray-900 border-red-200'}
+        ${index === currentTurn ? 'bg-current-turn' : ''}
         ${selectedCombatant?.id === combatant.id ? 'ring-2 ring-blue-500' : ''}
       `}
     >
@@ -80,8 +94,8 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
           type="number"
           value={combatant.initiative}
           onChange={(e) => handleInitiativeUpdate(e.target.value)}
-          className={`bg-gray-800 border-none text-white font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-            validationErrors[`${combatant.id}-initiative`] ? 'text-red-400' : ''
+          className={`bg-white border border-gray-300 text-gray-900 font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+            validationErrors[`${combatant.id}-initiative`] ? 'text-red-600' : ''
           }`}
           onClick={(e) => e.stopPropagation()}
           title={validationErrors[`${combatant.id}-initiative`] || ''}
@@ -95,22 +109,22 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
             type="text"
             value={combatant.name}
             onChange={(e) => handleNameUpdate(e.target.value)}
-            className={`bg-transparent border-none text-white font-bold text-sm focus:outline-none flex-1 min-w-0 mr-1 ${
-              validationErrors[`${combatant.id}-name`] ? 'text-red-400' : ''
+            className={`bg-transparent border-none text-gray-900 font-bold text-sm focus:outline-none flex-1 min-w-0 mr-1 ${
+              validationErrors[`${combatant.id}-name`] ? 'text-red-600' : ''
             }`}
             onClick={(e) => e.stopPropagation()}
             title={validationErrors[`${combatant.id}-name`] || ''}
           />
           {combatant.isPC ? (
             combatant.level && (
-              <span className={`${COLORS.PC_CHIP} px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1`}>
-                Lvl {combatant.level}
+              <span className="text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1" style={{background: 'var(--color-pc-badge)'}}>
+                ⭐ Lvl {combatant.level}
               </span>
             )
           ) : (
             combatant.cr && (
-              <span className={`${COLORS.NPC_CHIP} px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1`}>
-                CR {combatant.cr}
+              <span className="text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1" style={{background: 'var(--color-monster-badge)'}}>
+                💀 CR {combatant.cr}
               </span>
             )
           )}
@@ -128,7 +142,7 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
       {/* Stats Section */}
       <div className="flex items-center gap-3">
         <div className="flex flex-col items-center">
-          <div className="flex items-center gap-1 text-xs text-red-400 mb-1">
+          <div className="flex items-center gap-1 text-xs text-red-600 mb-1">
             <span>❤️</span>
             <span>HP</span>
           </div>
@@ -137,30 +151,30 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
               e.stopPropagation();
               onOpenHPModal(combatant, e);
             }}
-            className="bg-gray-800 hover:bg-gray-700 rounded px-3 py-2 text-center min-w-[70px] min-h-[44px] transition-colors"
+            className="bg-white hover:bg-gray-50 border border-gray-300 rounded px-3 py-2 text-center min-w-[70px] min-h-[44px] transition-colors"
             title="Manage HP"
           >
-            <div className="text-white font-bold text-sm whitespace-nowrap">
+            <div className={`font-bold text-sm whitespace-nowrap ${getHPStatusColor(combatant.hp, combatant.maxHp)} ${getHPStatusClass(combatant.hp, combatant.maxHp)}`}>
               {parseInt(String(combatant.hp)) || 0}/{parseInt(String(combatant.maxHp)) || 0}
               {(parseInt(String(combatant.tempHp)) || 0) > 0 && (
-                <span className="text-blue-400 ml-3"> +{parseInt(String(combatant.tempHp)) || 0}</span>
+                <span className="text-cyan-600 ml-3"> +{parseInt(String(combatant.tempHp)) || 0}</span>
               )}
             </div>
           </button>
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="flex items-center gap-1 text-xs text-blue-400 mb-1">
+          <div className="flex items-center gap-1 text-xs text-blue-600 mb-1">
             <span>🛡️</span>
             <span>AC</span>
           </div>
-          <div className="bg-gray-800 rounded px-2 py-1 w-10">
+          <div className="bg-white border border-gray-300 rounded px-2 py-1 w-10">
             <input
               type="number"
               value={combatant.ac}
               onChange={(e) => handleACUpdate(e.target.value)}
-              className={`bg-transparent border-none text-white font-bold text-center w-full text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                validationErrors[`${combatant.id}-ac`] ? 'text-red-400' : ''
+              className={`bg-transparent border-none text-gray-900 font-bold text-center w-full text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                validationErrors[`${combatant.id}-ac`] ? 'text-red-600' : ''
               }`}
               onClick={(e) => e.stopPropagation()}
               title={validationErrors[`${combatant.id}-ac`] || ''}
@@ -175,7 +189,7 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
           e.stopPropagation();
           onRemoveCreature(combatant.id);
         }}
-        className={`${COLORS.DANGER} text-white rounded px-3 py-2 text-sm font-bold transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center`}
+        className="btn-dnd-danger rounded px-3 py-2 text-sm font-bold transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
       >
         ×
       </button>
