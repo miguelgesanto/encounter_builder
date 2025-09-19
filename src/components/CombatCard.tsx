@@ -47,11 +47,20 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
 
   // Create validated update handlers
   const handleInitiativeUpdate = (value: string) => {
+    // Allow empty string during editing
+    if (value === '') {
+      onUpdateCreature(combatant.id, 'initiative', '');
+      setValidationErrors(prev => ({ ...prev, [`${combatant.id}-initiative`]: '' }));
+      return;
+    }
+
     const validation = validateInitiative(value);
     if (validation.isValid) {
       onUpdateCreature(combatant.id, 'initiative', parseInt(value));
       setValidationErrors(prev => ({ ...prev, [`${combatant.id}-initiative`]: '' }));
     } else {
+      // Still update the display value even if invalid, for better UX
+      onUpdateCreature(combatant.id, 'initiative', value);
       setValidationErrors(prev => ({ ...prev, [`${combatant.id}-initiative`]: validation.error || '' }));
     }
   };
@@ -91,14 +100,16 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
       <div className="flex items-center gap-2">
         <span className="text-xl">🎲</span>
         <input
-          type="number"
+          type="text"
           value={combatant.initiative}
           onChange={(e) => handleInitiativeUpdate(e.target.value)}
-          className={`bg-white border border-gray-300 text-gray-900 font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+          className={`bg-white border border-gray-300 text-gray-900 font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 ${
             validationErrors[`${combatant.id}-initiative`] ? 'text-red-600' : ''
           }`}
           onClick={(e) => e.stopPropagation()}
           title={validationErrors[`${combatant.id}-initiative`] || ''}
+          pattern="[0-9]*"
+          inputMode="numeric"
         />
       </div>
 

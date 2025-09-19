@@ -78,6 +78,21 @@ const App: React.FC = () => {
       xp: parseInt('33000'),
       tempHp: parseInt('0')
     },
+    {
+      id: '5',
+      name: 'Troll',
+      hp: parseInt('84'),
+      maxHp: parseInt('84'),
+      ac: parseInt('15'),
+      initiative: parseInt('8'),
+      isPC: false,
+      conditions: [],
+      cr: '5',
+      type: 'giant',
+      environment: 'swamp',
+      xp: parseInt('1800'),
+      tempHp: parseInt('0')
+    },
   ])
   const [currentTurn, setCurrentTurn] = useState(0)
   const [round, setRound] = useState(1)
@@ -187,13 +202,11 @@ const App: React.FC = () => {
 
     const initiative = currentCreature.initiative
 
-    // Check for lair actions first (highest priority)
-    if (initiative === 20) {
-      const lairCreatures = checkForLairActions(initiative, combatants)
-      if (lairCreatures.length > 0) {
-        setActiveReminders(lairCreatures)
-        return
-      }
+    // Check for lair actions first (highest priority) - at top of round
+    const lairCreatures = checkForLairActions(initiative, combatants)
+    if (lairCreatures.length > 0) {
+      setActiveReminders(lairCreatures)
+      return
     }
 
     // Check for creature-specific reminders

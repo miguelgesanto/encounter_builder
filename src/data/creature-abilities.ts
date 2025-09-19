@@ -8,45 +8,39 @@ export const CREATURE_ABILITIES: CreatureTemplate[] = [
       {
         type: "start_of_turn",
         name: "Frightful Presence",
-        description: "120 ft, DC 21 Wis save or frightened for 1 minute",
-        priority: "high"
+        description: "Available if not used recently",
+        priority: "medium"
       },
       {
         type: "legendary_actions",
-        name: "Legendary Actions (3)",
-        description: "Detect, Tail Attack, Wing Attack (2 actions)",
+        name: "Legendary Actions",
+        description: "3 actions available",
         priority: "critical",
         count: 3
       },
       {
         type: "lair_actions",
         name: "Lair Actions",
-        description: "Tremor (DC 15 Dex), Volcanic gases (DC 13 Con), or Magma eruption",
+        description: "Tremor, Volcanic gases, or Magma eruption",
         priority: "critical",
-        timing: "initiative 20"
+        timing: "top of round"
       },
       {
         type: "combat_ability",
         name: "Fire Breath",
-        description: "Recharge 5-6: 90-ft cone, DC 24 Dex, 91 (26d6) fire damage",
+        description: "Check recharge (5-6 on d6)",
         priority: "critical"
-      },
-      {
-        type: "combat_ability",
-        name: "Multiattack",
-        description: "Frightful Presence + Bite + 2 Claws",
-        priority: "high"
       },
       {
         type: "resistance",
         name: "Fire Immunity",
-        description: "Immune to fire damage",
+        description: "Negates fire damage",
         priority: "high"
       },
       {
         type: "resistance",
         name: "Legendary Resistance",
-        description: "3/day: Can choose to succeed on failed save",
+        description: "3/day remaining",
         priority: "critical"
       }
     ]
@@ -69,40 +63,40 @@ export const CREATURE_ABILITIES: CreatureTemplate[] = [
     abilities: [
       {
         type: "legendary_actions",
-        name: "Legendary Actions (3)",
-        description: "Cantrip, Paralyzing Touch (2), Frightening Gaze (2), Disrupt Life (3)",
+        name: "Legendary Actions",
+        description: "3 actions available",
         priority: "critical",
         count: 3
       },
       {
         type: "lair_actions",
         name: "Lair Actions",
-        description: "Regain spell slot (d8), Negative energy tether, Spirit summon (52 dmg)",
+        description: "Regain spell slot, Energy tether, or Spirit summon",
         priority: "critical",
-        timing: "initiative 20"
+        timing: "top of round"
       },
       {
         type: "concentration",
-        name: "Spellcasting (18th level)",
-        description: "DC 20, +12 to hit. May lose concentration when damaged",
+        name: "Concentration",
+        description: "Check if maintaining spell",
         priority: "high"
       },
       {
         type: "resistance",
         name: "Legendary Resistance",
-        description: "3/day: Can choose to succeed on failed save",
+        description: "3/day remaining",
         priority: "critical"
       },
       {
         type: "resistance",
         name: "Turn Resistance",
-        description: "Advantage on saves vs turn undead effects",
+        description: "Advantage vs turn undead",
         priority: "medium"
       },
       {
         type: "combat_ability",
         name: "Paralyzing Touch",
-        description: "DC 18 Con save or paralyzed for 1 minute",
+        description: "Save or paralyzed",
         priority: "high"
       }
     ]
@@ -126,14 +120,21 @@ export const CREATURE_ABILITIES: CreatureTemplate[] = [
       {
         type: "start_of_turn",
         name: "Regeneration",
-        description: "Regains 10 HP (disabled by acid/fire damage)",
+        description: "Regains 10 HP unless acid/fire damage",
         priority: "high"
       },
       {
         type: "resistance",
-        name: "Resistances",
-        description: "Regeneration stopped by acid or fire",
-        priority: "medium"
+        name: "Regeneration Weakness",
+        description: "Acid or fire stops regeneration",
+        priority: "high"
+      },
+      {
+        type: "lair_actions",
+        name: "Swamp Lair Actions",
+        description: "Entangling roots, Toxic spores, or Muddy ground",
+        priority: "critical",
+        timing: "top of round"
       }
     ]
   },
@@ -144,19 +145,19 @@ export const CREATURE_ABILITIES: CreatureTemplate[] = [
       {
         type: "start_of_turn",
         name: "Eye Rays",
-        description: "Roll 3 eye rays at different targets",
+        description: "Roll 3 rays at different targets",
         priority: "critical"
       },
       {
         type: "combat_ability",
         name: "Antimagic Cone",
-        description: "150ft cone negates magic (including own eye rays)",
+        description: "Negates magic (including own rays)",
         priority: "high"
       },
       {
         type: "legendary_actions",
         name: "Legendary Actions",
-        description: "3 actions: Eye ray or move",
+        description: "3 actions available",
         priority: "high",
         count: 3
       }
@@ -169,20 +170,20 @@ export const CREATURE_ABILITIES: CreatureTemplate[] = [
       {
         type: "start_of_turn",
         name: "Regeneration",
-        description: "Regains 20 HP (disabled in sunlight/running water)",
+        description: "Regains 20 HP unless sunlight/running water",
         priority: "high"
       },
       {
         type: "legendary_actions",
         name: "Legendary Actions",
-        description: "3 actions: Move, Unarmed Strike, Bite (costs 2)",
+        description: "3 actions available",
         priority: "high",
         count: 3
       },
       {
         type: "resistance",
-        name: "Resistances",
-        description: "Resistant: necrotic, non-magical physical",
+        name: "Damage Resistances",
+        description: "Necrotic, non-magical physical",
         priority: "medium"
       }
     ]

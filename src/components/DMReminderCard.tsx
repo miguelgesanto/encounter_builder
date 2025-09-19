@@ -25,24 +25,24 @@ const DMReminderCard: React.FC<DMReminderCardProps> = ({
   if (reminders.length === 0) return null;
 
   return (
-    <div className="card-dnd mb-4 border-l-4 border-amber-500 bg-amber-50">
+    <div className="card-dnd mb-2 border-l-4 border-amber-500 bg-amber-50">
 
       {/* Header */}
-      <div className="flex justify-between items-center p-3 border-b border-amber-200">
-        <h3 className="font-semibold text-amber-900 text-sm flex items-center gap-2">
+      <div className="flex justify-between items-center px-2 py-1 border-b border-amber-200">
+        <h3 className="font-semibold text-amber-900 text-xs flex items-center gap-1">
           💡 {creature.name} - Round {round}
         </h3>
         <button
           onClick={onDismiss}
-          className="text-amber-600 hover:text-amber-800 p-1 rounded hover:bg-amber-100 transition-colors"
+          className="text-amber-600 hover:text-amber-800 p-0.5 rounded hover:bg-amber-100 transition-colors"
           aria-label="Dismiss reminder"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3 h-3" />
         </button>
       </div>
 
-      {/* Compact Single Column Layout */}
-      <div className="p-3 space-y-2">
+      {/* Compact Inline Layout */}
+      <div className="px-2 py-1 space-y-0.5">
         {reminders.map((reminder, idx) => {
           const getIcon = (type: string) => {
             switch(type) {
@@ -57,16 +57,16 @@ const DMReminderCard: React.FC<DMReminderCardProps> = ({
           };
 
           return (
-            <div key={idx} className="text-sm flex items-start gap-2">
-              <span className="text-base mt-0.5">{getIcon(reminder.type)}</span>
+            <div key={idx} className="text-xs flex items-start gap-1">
+              <span className="text-sm mt-0.5">{getIcon(reminder.type)}</span>
               <div className="flex-1">
                 <span className="font-medium text-gray-800">{reminder.name}:</span>{' '}
                 <span className="text-gray-700">{reminder.description}</span>
                 {reminder.timing && (
-                  <span className="text-xs text-gray-500 block">({reminder.timing})</span>
+                  <span className="text-xs text-gray-500 ml-1">({reminder.timing})</span>
                 )}
                 {reminder.count && (
-                  <span className="text-xs text-gray-500 block">({reminder.count} actions)</span>
+                  <span className="text-xs text-gray-500 ml-1">({reminder.count} actions)</span>
                 )}
               </div>
             </div>

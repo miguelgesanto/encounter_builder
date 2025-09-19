@@ -17,15 +17,21 @@ export const getContextualReminders = (
     allCombatants[currentTurn]?.id === creature.id :
     creature.id === currentTurn.toString() || currentTurn === parseInt(creature.id);
 
-  // Check if current initiative is exactly 20 for lair actions
+  // Check if current initiative is the highest initiative for lair actions
   const currentCreature = allCombatants?.[currentTurn];
-  const isInitiative20 = currentCreature?.initiative === 20;
+  const maxInitiative = allCombatants ? Math.max(...allCombatants.map(c => c.initiative)) : 0;
+  const isTopOfRound = currentCreature?.initiative === maxInitiative;
 
-  // Lair Actions (Initiative 20) - HIGHEST PRIORITY
-  if (isInitiative20) {
+  // Lair Actions (Top of Round) - HIGHEST PRIORITY
+  // Show lair actions if: (1) current initiative is highest AND (2) this creature has lair actions
+  if (isTopOfRound) {
     const lairActions = creatureTemplate.abilities.filter(a => a.type === 'lair_actions');
     if (lairActions.length > 0) {
-      return lairActions; // Return ONLY lair actions, override everything else
+      reminders.push(...lairActions);
+      // If it's also this creature's turn, continue to add their other abilities too
+      if (!isCreatureTurn) {
+        return reminders; // Return ONLY lair actions if it's not the creature's turn
+      }
     }
   }
 
@@ -37,7 +43,7 @@ export const getContextualReminders = (
   }
 
   // Not creature's turn but creature has legendary actions - show them
-  if (!isCreatureTurn && !isInitiative20) {
+  if (!isCreatureTurn && !isTopOfRound) {
     const legendaryActions = creatureTemplate.abilities.filter(a => a.type === 'legendary_actions');
     if (legendaryActions.length > 0) {
       reminders.push(...legendaryActions);
@@ -60,12 +66,26 @@ export const hasLegendaryActions = (creature: Combatant): boolean => {
 
 // Lair action special handling
 export const checkForLairActions = (initiative: number, creatures: Combatant[]): Combatant[] => {
-  if (initiative !== 20) return [];
-
-  return creatures.filter(creature => {
-    const template = CREATURE_ABILITIES.find(c => c.name === creature.name);
-    return template?.abilities.some(a => a.type === 'lair_actions');
+  // Check if this is the highest initiative (top of round)
+  const maxInitiative = Math.max(...creatures.map(c => c.initiative));
+  console.log('🔍 checkForLairActions:', {
+    currentInitiative: initiative,
+    maxInitiative,
+    isTopOfRound: initiative === maxInitiative,
+    allCreatures: creatures.map(c => ({ name: c.name, initiative: c.initiative }))
   });
+
+  if (initiative !== maxInitiative) return [];
+
+  const lairCreatures = creatures.filter(creature => {
+    const template = CREATURE_ABILITIES.find(c => c.name === creature.name);
+    const hasLair = template?.abilities.some(a => a.type === 'lair_actions');
+    console.log(`🏰 Checking ${creature.name}: hasLair=${hasLair}, template=${!!template}`);
+    return hasLair;
+  });
+
+  console.log('🎭 Final lair creatures:', lairCreatures.map(c => c.name));
+  return lairCreatures;
 };
 
 // Get the current creature based on turn index
