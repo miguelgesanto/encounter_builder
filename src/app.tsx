@@ -4,7 +4,7 @@ import { CreatureBrowser } from './components/CreatureBrowser'
 import { Sidebar } from './components/Sidebar'
 import { ConditionsTracker } from './components/ConditionsTracker'
 import { PCForm } from './components/PCForm'
-import { RightPanel } from './components/RightPanel'
+import { EnhancedRightPanel } from './components/EnhancedRightPanel'
 import { SaveLoadManager, SavedEncounter } from './components/SaveLoadManager'
 import { HPModal } from './components/HPModal'
 import { QuickAddModal } from './components/QuickAddModal'
@@ -14,11 +14,22 @@ import { Combatant, SavedEncounter as SavedEncounterType } from './types/combata
 import { STORAGE_KEYS } from './constants/ui'
 import { useInitiative } from './hooks/useInitiative'
 import { useEncounterBalance } from './hooks/useEncounterBalance'
+import { useEncounterStore } from './stores/encounterStore'
 import { checkForLairActions, getCurrentCreature, hasActiveReminders } from './utils/reminder-logic'
 
 const App: React.FC = () => {
   const { rollInitiative, rollAllInitiative, sortByInitiative } = useInitiative();
   const { calculateDifficulty } = useEncounterBalance();
+
+  // Get UI state from Zustand store for panel management
+  const {
+    ui: { leftSidebarCollapsed, rightPanelCollapsed },
+    initiative: { selectedCombatantId },
+    toggleLeftSidebar,
+    toggleRightPanel,
+    nextTurn: storeNextTurn,
+    setSelectedCombatant: setStoreSelectedCombatant
+  } = useEncounterStore();
 
   const [combatants, setCombatants] = useState<Combatant[]>([
     {
@@ -96,9 +107,11 @@ const App: React.FC = () => {
   ])
   const [currentTurn, setCurrentTurn] = useState(0)
   const [round, setRound] = useState(1)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
-  const [selectedCombatant, setSelectedCombatant] = useState<Combatant | null>(null)
+
+  // Derive selected combatant from store state and local combatants
+  const selectedCombatant = selectedCombatantId
+    ? combatants.find(c => c.id === selectedCombatantId) || null
+    : null
   const [encounterNotes, setEncounterNotes] = useState('')
   const [encounterName, setEncounterName] = useState('Goblin Ambush')
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
@@ -185,6 +198,9 @@ const App: React.FC = () => {
 
     // Update reminders after turn change
     updateReminders(nextIndex, nextRound)
+
+    // Trigger store nextTurn to handle auto-collapse
+    storeNextTurn()
   }
 
   // New reminder update function
@@ -295,7 +311,7 @@ const App: React.FC = () => {
   const removeCreature = (id: string) => {
     setCombatants(prev => prev.filter(c => c.id !== id))
     if (selectedCombatant?.id === id) {
-      setSelectedCombatant(null)
+      setStoreSelectedCombatant(null)
     }
   }
 
@@ -316,7 +332,7 @@ const App: React.FC = () => {
   }
 
   const handleCombatantClick = (combatant: Combatant) => {
-    setSelectedCombatant(selectedCombatant?.id === combatant.id ? null : combatant)
+    setStoreSelectedCombatant(selectedCombatantId === combatant.id ? null : combatant.id)
   }
 
   const loadEncounter = (encounter: SavedEncounterType) => {
@@ -337,7 +353,7 @@ const App: React.FC = () => {
     setCurrentTurn(parseInt(String(encounter.currentTurn)) || 0)
     setEncounterNotes(encounter.notes)
     setEncounterName(encounter.name)
-    setSelectedCombatant(null)
+    setStoreSelectedCombatant(null)
   }
 
   const difficultyData = calculateDifficulty(combatants)
@@ -345,8 +361,8 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-dnd-primary">
       {/* Left Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-80'} sidebar-dnd flex flex-col transition-all duration-300 overflow-hidden`}>
-        <Sidebar title="⚔️ Encounter Builder" collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}>
+      <div className={`${leftSidebarCollapsed ? 'w-12' : 'w-80'} sidebar-dnd flex flex-col transition-all duration-1000 overflow-hidden`}>
+        <Sidebar title="⚔️ Encounter Builder" collapsed={leftSidebarCollapsed} onToggle={toggleLeftSidebar}>
           <div className="space-y-4">
             {/* Difficulty Display */}
             <div className="card-dnd p-4">
@@ -389,29 +405,29 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <button onClick={rollAllInitiativeHandler} className="btn-dnd btn-dnd-warning flex items-center gap-2">
-              <Dice1 className="w-4 h-4" />
+          <div className="flex items-center gap-2">
+            <button onClick={rollAllInitiativeHandler} className="btn-dnd btn-dnd-warning flex items-center gap-1 px-2 py-1 text-sm">
+              <Dice1 className="w-3 h-3" />
               Roll All
             </button>
-            <button onClick={sortByInitiativeHandler} className="btn-dnd btn-dnd-primary flex items-center gap-2">
+            <button onClick={sortByInitiativeHandler} className="btn-dnd btn-dnd-primary flex items-center gap-1 px-2 py-1 text-sm">
               Sort Initiative
             </button>
-            <button onClick={nextTurn} className="btn-dnd btn-dnd-warning flex items-center gap-2" disabled={combatants.length === 0}>
-              <Play className="w-4 h-4" />
+            <button onClick={nextTurn} className="btn-dnd btn-dnd-warning flex items-center gap-1 px-2 py-1 text-sm" disabled={combatants.length === 0}>
+              <Play className="w-3 h-3" />
               Next Turn
             </button>
-            <button onClick={() => { setRound(1); setCurrentTurn(0); setActiveReminders([]) }} className="btn-dnd btn-dnd-secondary flex items-center gap-2">
+            <button onClick={() => { setRound(1); setCurrentTurn(0); setActiveReminders([]) }} className="btn-dnd btn-dnd-secondary flex items-center gap-1 px-2 py-1 text-sm">
               Reset
             </button>
             <button
               onClick={() => setShowReminders(!showReminders)}
-              className={`px-3 py-2 rounded-lg flex items-center gap-1 transition-colors ${
+              className={`px-2 py-1 text-sm rounded-lg flex items-center gap-1 transition-colors ${
                 showReminders ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
               }`}
               title="Toggle DM Reminders"
             >
-              <Lightbulb className="w-4 h-4" />
+              <Lightbulb className="w-3 h-3" />
               DM Reminders
             </button>
           </div>
@@ -428,7 +444,7 @@ const App: React.FC = () => {
               currentTurn={currentTurn}
               round={round}
               initiative={creature.initiative}
-              onDismiss={() => setActiveReminders([])}
+              onDismiss={() => setActiveReminders(prev => prev.filter(c => c.id !== creature.id))}
               allCombatants={combatants}
             />
           ))}
@@ -446,6 +462,7 @@ const App: React.FC = () => {
                 onRemoveCondition={removeCondition}
                 onOpenHPModal={openHPModal}
                 onHandleCombatantClick={handleCombatantClick}
+                onRollInitiative={rollInitiative}
                 selectedCombatant={selectedCombatant}
               />
             ))}
@@ -474,13 +491,13 @@ const App: React.FC = () => {
       </div>
 
       {/* Right Panel */}
-      <RightPanel
+      <EnhancedRightPanel
         collapsed={rightPanelCollapsed}
-        onToggle={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+        onToggle={toggleRightPanel}
         selectedCombatant={selectedCombatant}
         encounterNotes={encounterNotes}
         onNotesChange={setEncounterNotes}
-        onSelectCombatant={setSelectedCombatant}
+        onSelectCombatant={(combatant) => setStoreSelectedCombatant(combatant?.id || null)}
       />
 
       {/* Modals */}

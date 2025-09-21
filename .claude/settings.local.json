@@ -7,7 +7,11 @@
       "Bash(npx tsc:*)",
       "mcp__ide__getDiagnostics",
       "Bash(npm start)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:5e.tools)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:gist.github.com)"
     ],
     "deny": [],
     "ask": []

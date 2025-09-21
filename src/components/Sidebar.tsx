@@ -19,7 +19,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       collapsed ? 'w-12' : 'w-80'
     } sidebar-dnd flex flex-col transition-all duration-300 overflow-hidden`}>
       <div className="p-4 border-b border-dnd">
-        <div className="flex items-center justify-between">
+        <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && (
             <h2 className="text-lg font-semibold text-dnd-primary">{title}</h2>
           )}

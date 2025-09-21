@@ -119,36 +119,36 @@ export const SaveLoadManager: React.FC<SaveLoadManagerProps> = ({
         {/* Save Button */}
         <button
           onClick={onShowSaveDialog}
-          className="btn-dnd btn-dnd-primary flex items-center gap-1"
+          className="btn-dnd btn-dnd-primary flex items-center gap-1 px-2 py-1 text-sm"
           title="Save encounter"
         >
-          <Save className="w-4 h-4" />
+          <Save className="w-3 h-3" />
           Save
         </button>
 
         {/* Load Button */}
         <button
           onClick={onShowLoadDialog}
-          className="btn-dnd btn-dnd-primary flex items-center gap-1"
+          className="btn-dnd btn-dnd-primary flex items-center gap-1 px-2 py-1 text-sm"
           title="Load saved encounter"
         >
-          <FolderOpen className="w-4 h-4" />
+          <FolderOpen className="w-3 h-3" />
           Load
         </button>
 
         {/* Export Button */}
         <button
           onClick={exportEncounter}
-          className="btn-dnd btn-dnd-success flex items-center gap-1"
+          className="btn-dnd btn-dnd-success flex items-center gap-1 px-2 py-1 text-sm"
           title="Export encounter to file"
         >
-          <Download className="w-4 h-4" />
+          <Download className="w-3 h-3" />
           Export
         </button>
 
         {/* Import Button */}
-        <label className="btn-dnd btn-dnd-warning flex items-center gap-1 cursor-pointer">
-          <Upload className="w-4 h-4" />
+        <label className="btn-dnd btn-dnd-warning flex items-center gap-1 px-2 py-1 text-sm cursor-pointer">
+          <Upload className="w-3 h-3" />
           Import
           <input
             type="file"

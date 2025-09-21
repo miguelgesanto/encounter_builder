@@ -14,6 +14,7 @@ interface CombatCardProps {
   onRemoveCondition: (combatantId: string, conditionIndex: number) => void;
   onOpenHPModal: (combatant: Combatant, event: React.MouseEvent) => void;
   onHandleCombatantClick: (combatant: Combatant) => void;
+  onRollInitiative?: (combatant: Combatant) => number;
   selectedCombatant?: Combatant;
 }
 
@@ -27,6 +28,7 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
   onRemoveCondition,
   onOpenHPModal,
   onHandleCombatantClick,
+  onRollInitiative,
   selectedCombatant
 }) => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -87,23 +89,40 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
   return (
     <div
       key={combatant.id}
-      onClick={() => onHandleCombatantClick(combatant)}
       className={`
-        flex items-center rounded-2xl px-4 py-2 font-sans gap-3 mb-2 border
-        cursor-pointer hover:shadow-lg ${ANIMATION.TRANSITION}
+        relative rounded-2xl px-4 py-1 font-sans gap-3 mb-2 border
         ${combatant.isPC ? 'bg-player-character text-gray-900 border-blue-200' : 'bg-monster text-gray-900 border-red-200'}
         ${index === currentTurn ? 'bg-current-turn' : ''}
         ${selectedCombatant?.id === combatant.id ? 'ring-2 ring-blue-500' : ''}
       `}
     >
+      {/* Invisible clickable overlay */}
+      <div
+        onClick={() => onHandleCombatantClick(combatant)}
+        className="absolute inset-0 cursor-pointer hover:shadow-lg transition-shadow rounded-2xl z-0"
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex items-center gap-3">
       {/* Initiative Section */}
-      <div className="flex items-center gap-2">
-        <span className="text-xl">🎲</span>
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => {
+            if (onRollInitiative) {
+              const newInitiative = onRollInitiative(combatant);
+              onUpdateCreature(combatant.id, 'initiative', newInitiative);
+            }
+          }}
+          className="text-base hover:text-xl transition-all duration-200 cursor-pointer"
+          title="Roll initiative"
+        >
+          🎲
+        </button>
         <input
           type="text"
           value={combatant.initiative}
           onChange={(e) => handleInitiativeUpdate(e.target.value)}
-          className={`bg-white border border-gray-300 text-gray-900 font-bold text-center w-12 text-sm focus:outline-none rounded px-2 py-1 ${
+          className={`bg-white border border-gray-300 text-gray-900 font-bold text-center w-10 text-xs focus:outline-none rounded px-1 py-1 ${
             validationErrors[`${combatant.id}-initiative`] ? 'text-red-600' : ''
           }`}
           onClick={(e) => e.stopPropagation()}
@@ -114,13 +133,13 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
       </div>
 
       {/* Combatant Info Section */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 py-1">
         <div className="flex items-center justify-between mb-1">
           <input
             type="text"
             value={combatant.name}
             onChange={(e) => handleNameUpdate(e.target.value)}
-            className={`bg-transparent border-none text-gray-900 font-bold text-sm focus:outline-none flex-1 min-w-0 mr-1 ${
+            className={`bg-transparent border-none text-gray-900 font-bold text-xs focus:outline-none flex-1 min-w-0 mr-1 ${
               validationErrors[`${combatant.id}-name`] ? 'text-red-600' : ''
             }`}
             onClick={(e) => e.stopPropagation()}
@@ -128,13 +147,13 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
           />
           {combatant.isPC ? (
             combatant.level && (
-              <span className="text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1" style={{background: 'var(--color-pc-badge)'}}>
+              <span className="text-white px-1 py-0.5 rounded text-xs font-medium whitespace-nowrap ml-1" style={{background: 'var(--color-pc-badge)'}}>
                 ⭐ Lvl {combatant.level}
               </span>
             )
           ) : (
             combatant.cr && (
-              <span className="text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-1" style={{background: 'var(--color-monster-badge)'}}>
+              <span className="text-white px-1 py-0.5 rounded text-xs font-medium whitespace-nowrap ml-1" style={{background: 'var(--color-monster-badge)'}}>
                 💀 CR {combatant.cr}
               </span>
             )
@@ -151,9 +170,9 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
       </div>
 
       {/* Stats Section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <div className="flex flex-col items-center">
-          <div className="flex items-center gap-1 text-xs text-red-600 mb-1">
+          <div className="flex items-center gap-0.5 text-xs text-red-600 mb-0.5">
             <span>❤️</span>
             <span>HP</span>
           </div>
@@ -162,29 +181,29 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
               e.stopPropagation();
               onOpenHPModal(combatant, e);
             }}
-            className="bg-white hover:bg-gray-50 border border-gray-300 rounded px-3 py-2 text-center min-w-[70px] min-h-[44px] transition-colors"
+            className="bg-white hover:bg-gray-50 border border-gray-300 rounded px-1.5 py-0.5 text-center min-w-[50px] min-h-[24px] transition-colors"
             title="Manage HP"
           >
-            <div className={`font-bold text-sm whitespace-nowrap ${getHPStatusColor(combatant.hp, combatant.maxHp)} ${getHPStatusClass(combatant.hp, combatant.maxHp)}`}>
+            <div className={`font-bold text-xs whitespace-nowrap ${getHPStatusColor(combatant.hp, combatant.maxHp)} ${getHPStatusClass(combatant.hp, combatant.maxHp)}`}>
               {parseInt(String(combatant.hp)) || 0}/{parseInt(String(combatant.maxHp)) || 0}
               {(parseInt(String(combatant.tempHp)) || 0) > 0 && (
-                <span className="text-cyan-600 ml-3"> +{parseInt(String(combatant.tempHp)) || 0}</span>
+                <span className="text-cyan-600 ml-1"> +{parseInt(String(combatant.tempHp)) || 0}</span>
               )}
             </div>
           </button>
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="flex items-center gap-1 text-xs text-blue-600 mb-1">
+          <div className="flex items-center gap-0.5 text-xs text-blue-600 mb-0.5">
             <span>🛡️</span>
             <span>AC</span>
           </div>
-          <div className="bg-white border border-gray-300 rounded px-2 py-1 w-10">
+          <div className="bg-white border border-gray-300 rounded px-0.5 py-0.5 w-7">
             <input
               type="number"
               value={combatant.ac}
               onChange={(e) => handleACUpdate(e.target.value)}
-              className={`bg-transparent border-none text-gray-900 font-bold text-center w-full text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+              className={`bg-transparent border-none text-gray-900 font-bold text-center w-full text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                 validationErrors[`${combatant.id}-ac`] ? 'text-red-600' : ''
               }`}
               onClick={(e) => e.stopPropagation()}
@@ -200,10 +219,11 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
           e.stopPropagation();
           onRemoveCreature(combatant.id);
         }}
-        className="btn-dnd-danger rounded px-3 py-2 text-sm font-bold transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+        className="btn-dnd-danger rounded px-1.5 py-0.5 text-xs font-bold transition-colors min-w-[24px] min-h-[24px] flex items-center justify-center"
       >
         ×
       </button>
+      </div>
     </div>
   );
 });
