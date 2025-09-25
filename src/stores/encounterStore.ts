@@ -346,6 +346,9 @@ export const useEncounterStore = create<EncounterStore>()(
           activeEncounter.round++;
         }
         activeEncounter.updatedAt = new Date().toISOString();
+
+        // Auto-collapse left sidebar on next turn
+        state.ui.leftSidebarCollapsed = true;
       }),
 
       previousTurn: () => set((state) => {

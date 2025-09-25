@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { AlertCircle, X, Plus } from 'lucide-react'
 
 // D&D 5e conditions with descriptions and categories
@@ -66,10 +66,34 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
 }) => {
   const [showDropdown, setShowDropdown] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [dropdownPosition, setDropdownPosition] = useState<'below' | 'above'>('below')
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const filteredConditions = Object.entries(CONDITIONS).filter(([conditionName]) =>
     conditionName.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const updateDropdownPosition = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      const windowHeight = window.innerHeight
+      const dropdownHeight = 300 // Approximate dropdown height
+      const spaceBelow = windowHeight - rect.bottom
+      const spaceAbove = rect.top
+
+      if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+        setDropdownPosition('above')
+      } else {
+        setDropdownPosition('below')
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (showDropdown) {
+      updateDropdownPosition()
+    }
+  }, [showDropdown])
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -93,6 +117,7 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
       {/* Add Condition Dropdown */}
       <div className="relative">
         <button
+          ref={buttonRef}
           onClick={() => setShowDropdown(!showDropdown)}
           className="bg-white border border-gray-300 text-gray-600 px-2 py-1 rounded text-xs flex items-center gap-1 hover:border-gray-400 transition-colors"
         >
@@ -109,7 +134,7 @@ export const ConditionsTracker: React.FC<ConditionsTrackerProps> = ({
             />
 
             {/* Dropdown Menu */}
-            <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg z-20 shadow-lg">
+            <div className={`absolute ${dropdownPosition === 'above' ? 'bottom-full mb-1' : 'top-full mt-1'} left-0 w-64 bg-white border border-gray-300 rounded-lg z-20 shadow-lg`}>
               {/* Search Input */}
               <div className="p-2 border-b border-gray-300">
                 <input
