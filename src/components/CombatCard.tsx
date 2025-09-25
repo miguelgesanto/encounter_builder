@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { ConditionsTracker } from './ConditionsTracker';
 import { Combatant } from '../types/combatant';
 import { COLORS, ANIMATION } from '../constants/ui';
-import { validateHP, validateAC, validateInitiative, validateName } from '../utils/validation';
+// Simple inline validation functions
+const validateName = (name: string) => name.trim().length > 0;
+const validateAC = (ac: number) => ac >= 0 && ac <= 30;
+const validateInitiative = (init: number) => init >= -10 && init <= 50;
+const validateHP = (hp: number) => hp >= 0;
 
 interface CombatCardProps {
   combatant: Combatant;

@@ -1,22 +1,6 @@
 import React, { useState } from 'react'
-import { User, Shield, Heart, Zap, Eye, Swords, ChevronDown, ChevronUp } from 'lucide-react'
-
-interface Combatant {
-  id: string
-  name: string
-  hp: number
-  maxHp: number
-  ac: number
-  initiative: number
-  isPC: boolean
-  level?: number
-  conditions: Array<{ name: string; duration?: number }>
-  cr?: string
-  type?: string
-  environment?: string
-  xp?: number
-  tempHp?: number
-}
+import { User, Shield, Heart, Zap, Eye, Swords, ChevronDown, ChevronUp, Upload, FileText, Globe } from 'lucide-react'
+import { Combatant } from '../types/combatant'
 
 interface StatBlockProps {
   combatant: Combatant
@@ -69,7 +53,51 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
     }
   };
 
-  const abilities = getDefaultAbilities(combatant);
+  // Use actual abilities if available, otherwise fall back to defaults
+  const abilities = combatant.abilities && Object.keys(combatant.abilities).length > 0
+    ? {
+        str: combatant.abilities.str ?? 10,
+        dex: combatant.abilities.dex ?? 10,
+        con: combatant.abilities.con ?? 10,
+        int: combatant.abilities.int ?? 10,
+        wis: combatant.abilities.wis ?? 10,
+        cha: combatant.abilities.cha ?? 10
+      }
+    : getDefaultAbilities(combatant);
+
+  console.log('🎭 StatBlock abilities source:', combatant.abilities ? 'imported' : 'default');
+  console.log('🎭 StatBlock final abilities:', abilities);
+  console.log('🎭 StatBlock combatant.actions:', combatant.actions);
+  console.log('🎭 StatBlock actions length:', combatant.actions?.length || 0);
+
+  const getImportSourceInfo = () => {
+    if (!combatant.importSource) return null;
+
+    switch (combatant.importSource) {
+      case 'text':
+        return {
+          icon: <FileText className="w-3 h-3" />,
+          label: 'Imported from text',
+          color: 'text-blue-400'
+        };
+      case 'dndbeyond':
+        return {
+          icon: <Globe className="w-3 h-3" />,
+          label: 'Imported from D&D Beyond',
+          color: 'text-orange-400'
+        };
+      case 'manual':
+        return {
+          icon: <User className="w-3 h-3" />,
+          label: 'Created manually',
+          color: 'text-green-400'
+        };
+      default:
+        return null;
+    }
+  };
+
+  const importSourceInfo = getImportSourceInfo();
 
   return (
     <div className="bg-dnd-card border border-dnd rounded-lg p-3 space-y-2 text-xs">
@@ -127,9 +155,6 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
           </div>
           <div className="text-sm font-bold text-dnd-primary">
             {combatant.hp}/{combatant.maxHp}
-            {combatant.tempHp && combatant.tempHp > 0 && (
-              <span className="text-blue-400 text-xs ml-1">+{combatant.tempHp}</span>
-            )}
           </div>
           <div className="text-xs text-dnd-muted">
             ({Math.floor(combatant.maxHp / 8)}d{combatant.type === 'dragon' ? '12' : combatant.type === 'giant' ? '12' : '8'} + {Math.floor(abilities.con / 2) * Math.floor(combatant.maxHp / 8)})
@@ -140,7 +165,7 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
             <Zap className="w-3 h-3" />
             Speed
           </div>
-          <div className="text-sm font-bold text-dnd-primary">30 ft.</div>
+          <div className="text-sm font-bold text-dnd-primary">{combatant.speed || '30 ft.'}</div>
           <div className="text-xs text-dnd-muted">
             {combatant.type === 'dragon' && 'fly 80 ft.'}
             {combatant.type === 'undead' && 'hover'}
@@ -215,20 +240,13 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
           <div>
             <span className="font-medium text-dnd-secondary">Saves:</span>
             <div className="text-dnd-primary">
-              {combatant.type === 'dragon' && `Con +${Math.floor((abilities.con - 10) / 2) + getProficiencyBonus(combatant.cr)}, Wis +${Math.floor((abilities.wis - 10) / 2) + getProficiencyBonus(combatant.cr)}`}
-              {combatant.type === 'undead' && `Int +${Math.floor((abilities.int - 10) / 2) + getProficiencyBonus(combatant.cr)}, Wis +${Math.floor((abilities.wis - 10) / 2) + getProficiencyBonus(combatant.cr)}`}
-              {combatant.isPC && `Varies by class`}
-              {!combatant.isPC && combatant.type !== 'dragon' && combatant.type !== 'undead' && 'None'}
+              {combatant.saves || 'None'}
             </div>
           </div>
           <div>
             <span className="font-medium text-dnd-secondary">Skills:</span>
             <div className="text-dnd-primary">
-              {combatant.type === 'dragon' && 'Perception +7, Stealth +6'}
-              {combatant.type === 'undead' && 'Arcana +8, History +8'}
-              {combatant.type === 'giant' && 'Athletics +7'}
-              {combatant.isPC && 'Varies by class'}
-              {!combatant.isPC && !['dragon', 'undead', 'giant'].includes(combatant.type || '') && 'None'}
+              {combatant.skills || 'None'}
             </div>
           </div>
         </div>
@@ -237,29 +255,21 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         <div>
           <span className="font-medium text-dnd-secondary">Damage Resistances:</span>
           <span className="text-dnd-primary ml-1">
-            {combatant.type === 'dragon' && 'Fire'}
-            {combatant.type === 'undead' && 'Necrotic; Bludgeoning, Piercing, and Slashing from Nonmagical Attacks'}
-            {combatant.type === 'giant' && 'None'}
-            {!combatant.isPC && !['dragon', 'undead', 'giant'].includes(combatant.type || '') && 'None'}
-            {combatant.isPC && 'Varies by race/class'}
+            {combatant.damageResistances || 'None'}
           </span>
         </div>
 
         <div>
           <span className="font-medium text-dnd-secondary">Damage Immunities:</span>
           <span className="text-dnd-primary ml-1">
-            {combatant.type === 'dragon' && combatant.cr && parseFloat(combatant.cr) >= 10 ? 'Fire' : 'None'}
-            {combatant.type === 'undead' && 'Poison'}
-            {!['dragon', 'undead'].includes(combatant.type || '') && 'None'}
+            {combatant.damageImmunities || 'None'}
           </span>
         </div>
 
         <div>
           <span className="font-medium text-dnd-secondary">Condition Immunities:</span>
           <span className="text-dnd-primary ml-1">
-            {combatant.type === 'undead' && 'Charmed, Exhaustion, Poisoned'}
-            {combatant.type === 'dragon' && parseFloat(combatant.cr || '0') >= 15 ? 'Frightened' : 'None'}
-            {!['dragon', 'undead'].includes(combatant.type || '') && 'None'}
+            {combatant.conditionImmunities || 'None'}
           </span>
         </div>
 
@@ -267,11 +277,15 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         <div>
           <span className="font-medium text-dnd-secondary">Senses:</span>
           <span className="text-dnd-primary ml-1">
-            {combatant.type === 'dragon' && 'Blindsight 60 ft., Darkvision 120 ft.'}
-            {combatant.type === 'undead' && 'Darkvision 60 ft.'}
-            {combatant.type === 'giant' && 'Darkvision 60 ft.'}
-            {!['dragon', 'undead', 'giant'].includes(combatant.type || '') && 'Passive Perception ' + (10 + formatModifier(abilities.wis))}
-            , Passive Perception {10 + formatModifier(abilities.wis) + (combatant.type === 'dragon' ? getProficiencyBonus(combatant.cr) : 0)}
+            {combatant.senses || (
+              <>
+                {combatant.type === 'dragon' && 'Blindsight 60 ft., Darkvision 120 ft.'}
+                {combatant.type === 'undead' && 'Darkvision 60 ft.'}
+                {combatant.type === 'giant' && 'Darkvision 60 ft.'}
+                {!['dragon', 'undead', 'giant'].includes(combatant.type || '') && 'Passive Perception ' + (10 + Math.floor((abilities.wis - 10) / 2))}
+                {combatant.type === 'dragon' && ', Passive Perception ' + (10 + Math.floor((abilities.wis - 10) / 2) + getProficiencyBonus(combatant.cr))}
+              </>
+            )}
           </span>
         </div>
 
@@ -279,11 +293,15 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         <div>
           <span className="font-medium text-dnd-secondary">Languages:</span>
           <span className="text-dnd-primary ml-1">
-            {combatant.type === 'dragon' && 'Common, Draconic'}
-            {combatant.type === 'undead' && 'The languages it knew in life'}
-            {combatant.type === 'giant' && 'Giant'}
-            {combatant.isPC && 'Common + varies by race'}
-            {!combatant.isPC && !['dragon', 'undead', 'giant'].includes(combatant.type || '') && 'Common'}
+            {combatant.languages || (
+              <>
+                {combatant.type === 'dragon' && 'Common, Draconic'}
+                {combatant.type === 'undead' && 'The languages it knew in life'}
+                {combatant.type === 'giant' && 'Giant'}
+                {combatant.isPC && 'Common + varies by race'}
+                {!combatant.isPC && !['dragon', 'undead', 'giant'].includes(combatant.type || '') && 'Common'}
+              </>
+            )}
           </span>
         </div>
 
@@ -301,35 +319,69 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         <div className="border-t border-dnd pt-2">
           <h5 className="font-medium text-dnd-primary mb-1 text-xs">Special Abilities</h5>
           <div className="space-y-1 text-xs">
-            {combatant.type === 'dragon' && (
+            {/* Use imported special abilities if available */}
+            {combatant.specialAbilities && combatant.specialAbilities.length > 0 ? (
               <>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Legendary Resistance (3/Day):</span>
-                  <span className="text-dnd-primary ml-1">If the dragon fails a saving throw, it can choose to succeed instead.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Frightful Presence:</span>
-                  <span className="text-dnd-primary ml-1">Each creature within 120 feet must make a <span className="font-bold">DC 19</span> Wisdom saving throw or become frightened for 1 minute.</span>
-                </div>
+                {console.log('🌟 StatBlock rendering imported special abilities:', combatant.specialAbilities)}
+                {combatant.specialAbilities.map((ability, index) => {
+                  // Format the description with proper bolding for DC values and damage
+                  const formatAbilityDescription = (desc: string) => {
+                    return desc
+                      // Bold DC values
+                      .replace(/DC\s*(\d+)/g, 'DC <span class="font-bold">$1</span>')
+                      // Bold damage like "4 (1d4 + 2)"
+                      .replace(/(\d+\s*\([^)]+\))/g, '<span class="font-bold">$1</span>')
+                      // Bold standalone damage numbers before damage types
+                      .replace(/(\d+)\s+(damage|hit points?)/g, '<span class="font-bold">$1</span> $2')
+                      // Bold feet measurements
+                      .replace(/(\d+)\s+feet?/g, '<span class="font-bold">$1</span> feet');
+                  };
+
+                  return (
+                    <div key={index}>
+                      <span className="font-bold text-dnd-secondary">{ability.name}:</span>
+                      <span
+                        className="text-dnd-primary ml-1"
+                        dangerouslySetInnerHTML={{ __html: formatAbilityDescription(ability.description) }}
+                      />
+                    </div>
+                  );
+                })}
               </>
-            )}
-            {combatant.type === 'undead' && combatant.name.toLowerCase().includes('lich') && (
+            ) : (
+              /* Fallback to type-based special abilities if no imported ones */
               <>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Legendary Resistance (3/Day):</span>
-                  <span className="text-dnd-primary ml-1">If the lich fails a saving throw, it can choose to succeed instead.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Rejuvenation:</span>
-                  <span className="text-dnd-primary ml-1">If it has a phylactery, a destroyed lich gains a new body in <span className="font-bold">1d10</span> days.</span>
-                </div>
+                {combatant.type === 'dragon' && (
+                  <>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Legendary Resistance (3/Day):</span>
+                      <span className="text-dnd-primary ml-1">If the dragon fails a saving throw, it can choose to succeed instead.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Frightful Presence:</span>
+                      <span className="text-dnd-primary ml-1">Each creature within 120 feet must make a <span className="font-bold">DC 19</span> Wisdom saving throw or become frightened for 1 minute.</span>
+                    </div>
+                  </>
+                )}
+                {combatant.type === 'undead' && combatant.name.toLowerCase().includes('lich') && (
+                  <>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Legendary Resistance (3/Day):</span>
+                      <span className="text-dnd-primary ml-1">If the lich fails a saving throw, it can choose to succeed instead.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Rejuvenation:</span>
+                      <span className="text-dnd-primary ml-1">If it has a phylactery, a destroyed lich gains a new body in <span className="font-bold">1d10</span> days.</span>
+                    </div>
+                  </>
+                )}
+                {combatant.type === 'giant' && (
+                  <div>
+                    <span className="font-bold text-dnd-secondary">Regeneration:</span>
+                    <span className="text-dnd-primary ml-1">The troll regains <span className="font-bold">10</span> hit points at the start of its turn if it has at least 1 hit point.</span>
+                  </div>
+                )}
               </>
-            )}
-            {combatant.type === 'giant' && (
-              <div>
-                <span className="font-bold text-dnd-secondary">Regeneration:</span>
-                <span className="text-dnd-primary ml-1">The troll regains <span className="font-bold">10</span> hit points at the start of its turn if it has at least 1 hit point.</span>
-              </div>
             )}
           </div>
         </div>
@@ -340,81 +392,205 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         <div className="border-t border-dnd pt-2">
           <h5 className="font-medium text-dnd-primary mb-1 text-xs">Actions</h5>
           <div className="space-y-1 text-xs">
-            {combatant.type === 'dragon' && (
+            {/* Use imported actions if available */}
+            {combatant.actions && combatant.actions.length > 0 ? (
               <>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Multiattack:</span>
-                  <span className="text-dnd-primary ml-1">The dragon can use its Frightful Presence. It then makes three attacks: one with its bite and two with its claws.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Bite:</span>
-                  <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 10 ft., one target. Hit: <span className="font-bold">2d10 + {Math.floor((abilities.str - 10) / 2)}</span> piercing damage plus <span className="font-bold">1d6</span> fire damage.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Fire Breath (Recharge 5-6):</span>
-                  <span className="text-dnd-primary ml-1">90-foot line, DC <span className="font-bold">{8 + getProficiencyBonus(combatant.cr) + Math.floor((abilities.con - 10) / 2)}</span> Dex save, <span className="font-bold">18d6</span> fire damage (half on success).</span>
-                </div>
+                {console.log('🎯 StatBlock rendering imported actions:', combatant.actions)}
+                {combatant.actions.map((action, index) => {
+                  // Format the description with proper bolding for attack bonuses and damage
+                  const formatActionDescription = (desc: string) => {
+                    return desc
+                      // Bold attack bonuses like "+4 to hit"
+                      .replace(/(\+\d+)\s+to hit/g, '<span class="font-bold">$1</span> to hit')
+                      // Bold damage like "4 (1d4 + 2)"
+                      .replace(/(\d+\s*\([^)]+\))/g, '<span class="font-bold">$1</span>')
+                      // Bold standalone damage numbers before damage types
+                      .replace(/Hit:\s*(\d+)/g, 'Hit: <span class="font-bold">$1</span>')
+                      // Bold DC values
+                      .replace(/DC\s*(\d+)/g, 'DC <span class="font-bold">$1</span>');
+                  };
+
+                  return (
+                    <div key={index}>
+                      <span className="font-bold text-dnd-secondary">{action.name}:</span>
+                      <span
+                        className="text-dnd-primary ml-1"
+                        dangerouslySetInnerHTML={{ __html: formatActionDescription(action.description) }}
+                      />
+                    </div>
+                  );
+                })}
               </>
-            )}
-            {combatant.type === 'undead' && combatant.name.toLowerCase().includes('lich') && (
+            ) : (
+              /* Fallback to type-based actions if no imported actions */
               <>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Paralyzing Touch:</span>
-                  <span className="text-dnd-primary ml-1">Melee Spell Attack: <span className="font-bold">+{Math.floor((abilities.int - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one creature. Hit: <span className="font-bold">3d6</span> cold damage, target must save or be paralyzed for 1 minute.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Spellcasting:</span>
-                  <span className="text-dnd-primary ml-1">18th-level spellcaster. Spell save DC <span className="font-bold">{8 + getProficiencyBonus(combatant.cr) + Math.floor((abilities.int - 10) / 2)}</span>, <span className="font-bold">+{getProficiencyBonus(combatant.cr) + Math.floor((abilities.int - 10) / 2)}</span> to hit with spell attacks.</span>
-                </div>
+                {combatant.type === 'dragon' && (
+                  <>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Multiattack:</span>
+                      <span className="text-dnd-primary ml-1">The dragon can use its Frightful Presence. It then makes three attacks: one with its bite and two with its claws.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Bite:</span>
+                      <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 10 ft., one target. Hit: <span className="font-bold">2d10 + {Math.floor((abilities.str - 10) / 2)}</span> piercing damage plus <span className="font-bold">1d6</span> fire damage.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Fire Breath (Recharge 5-6):</span>
+                      <span className="text-dnd-primary ml-1">90-foot line, DC <span className="font-bold">{8 + getProficiencyBonus(combatant.cr) + Math.floor((abilities.con - 10) / 2)}</span> Dex save, <span className="font-bold">18d6</span> fire damage (half on success).</span>
+                    </div>
+                  </>
+                )}
+                {combatant.type === 'undead' && combatant.name.toLowerCase().includes('lich') && (
+                  <>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Paralyzing Touch:</span>
+                      <span className="text-dnd-primary ml-1">Melee Spell Attack: <span className="font-bold">+{Math.floor((abilities.int - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one creature. Hit: <span className="font-bold">3d6</span> cold damage, target must save or be paralyzed for 1 minute.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Spellcasting:</span>
+                      <span className="text-dnd-primary ml-1">18th-level spellcaster. Spell save DC <span className="font-bold">{8 + getProficiencyBonus(combatant.cr) + Math.floor((abilities.int - 10) / 2)}</span>, <span className="font-bold">+{getProficiencyBonus(combatant.cr) + Math.floor((abilities.int - 10) / 2)}</span> to hit with spell attacks.</span>
+                    </div>
+                  </>
+                )}
+                {combatant.type === 'giant' && (
+                  <>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Multiattack:</span>
+                      <span className="text-dnd-primary ml-1">The troll makes three attacks: one with its bite and two with its claws.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Bite:</span>
+                      <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one target. Hit: <span className="font-bold">1d6 + {Math.floor((abilities.str - 10) / 2)}</span> piercing damage.</span>
+                    </div>
+                    <div>
+                      <span className="font-bold text-dnd-secondary">Claw:</span>
+                      <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one target. Hit: <span className="font-bold">1d6 + {Math.floor((abilities.str - 10) / 2)}</span> slashing damage.</span>
+                    </div>
+                  </>
+                )}
+                {!['dragon', 'undead', 'giant'].includes(combatant.type || '') && (
+                  <div>
+                    <span className="font-bold text-dnd-secondary">Attack:</span>
+                    <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one target. Hit: <span className="font-bold">1d6 + {Math.floor((abilities.str - 10) / 2)}</span> damage.</span>
+                  </div>
+                )}
               </>
-            )}
-            {combatant.type === 'giant' && (
-              <>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Multiattack:</span>
-                  <span className="text-dnd-primary ml-1">The troll makes three attacks: one with its bite and two with its claws.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Bite:</span>
-                  <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one target. Hit: <span className="font-bold">1d6 + {Math.floor((abilities.str - 10) / 2)}</span> piercing damage.</span>
-                </div>
-                <div>
-                  <span className="font-bold text-dnd-secondary">Claw:</span>
-                  <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one target. Hit: <span className="font-bold">1d6 + {Math.floor((abilities.str - 10) / 2)}</span> slashing damage.</span>
-                </div>
-              </>
-            )}
-            {!['dragon', 'undead', 'giant'].includes(combatant.type || '') && (
-              <div>
-                <span className="font-bold text-dnd-secondary">Attack:</span>
-                <span className="text-dnd-primary ml-1">Melee Weapon Attack: <span className="font-bold">+{Math.floor((abilities.str - 10) / 2) + getProficiencyBonus(combatant.cr)}</span> to hit, reach 5 ft., one target. Hit: <span className="font-bold">1d6 + {Math.floor((abilities.str - 10) / 2)}</span> damage.</span>
-              </div>
             )}
           </div>
         </div>
       )}
 
       {/* Legendary Actions */}
-      {!combatant.isPC && combatant.cr && parseFloat(combatant.cr) >= 10 && ['dragon', 'undead'].includes(combatant.type || '') && (
+      {!combatant.isPC && combatant.legendaryActions && combatant.legendaryActions.length > 0 && (
         <div className="border-t border-dnd pt-2">
-          <h5 className="font-medium text-dnd-primary mb-1 text-xs">Legendary Actions (3 per turn)</h5>
+          <h5 className="font-medium text-dnd-primary mb-1 text-xs">Legendary Actions</h5>
           <div className="space-y-1 text-xs">
-            <div>
-              <span className="font-bold text-dnd-secondary">Detect:</span>
-              <span className="text-dnd-primary ml-1">The {combatant.name.toLowerCase()} makes a Wisdom (Perception) check.</span>
-            </div>
-            <div>
-              <span className="font-bold text-dnd-secondary">Attack:</span>
-              <span className="text-dnd-primary ml-1">The {combatant.name.toLowerCase()} makes one attack.</span>
-            </div>
-            {combatant.type === 'dragon' && (
-              <div>
-                <span className="font-bold text-dnd-secondary">Wing Attack (Costs 2 Actions):</span>
-                <span className="text-dnd-primary ml-1">All creatures within 15 feet make DC <span className="font-bold">{8 + getProficiencyBonus(combatant.cr) + Math.floor((abilities.str - 10) / 2)}</span> Dex save or take <span className="font-bold">2d6 + {Math.floor((abilities.str - 10) / 2)}</span> bludgeoning damage and be knocked prone.</span>
-              </div>
-            )}
+            {console.log('⭐ StatBlock rendering imported legendary actions:', combatant.legendaryActions)}
+            {combatant.legendaryActions.map((action, index) => {
+              // Format the description with proper bolding
+              const formatLegendaryDescription = (desc: string) => {
+                return desc
+                  // Bold attack bonuses like "+4 to hit"
+                  .replace(/(\+\d+)\s+to hit/g, '<span class="font-bold">$1</span> to hit')
+                  // Bold damage like "4 (1d4 + 2)"
+                  .replace(/(\d+\s*\([^)]+\))/g, '<span class="font-bold">$1</span>')
+                  // Bold DC values
+                  .replace(/DC\s*(\d+)/g, 'DC <span class="font-bold">$1</span>')
+                  // Bold costs like "(Costs 2 Actions)"
+                  .replace(/\(Costs\s+(\d+)\s+Actions?\)/g, '(Costs <span class="font-bold">$1</span> Actions)');
+              };
+
+              return (
+                <div key={index}>
+                  <span className="font-bold text-dnd-secondary">{action.name}:</span>
+                  <span
+                    className="text-dnd-primary ml-1"
+                    dangerouslySetInnerHTML={{ __html: formatLegendaryDescription(action.description) }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
+      )}
+
+      {/* Reactions */}
+      {!combatant.isPC && combatant.reactions && combatant.reactions.length > 0 && (
+        <div className="border-t border-dnd pt-2">
+          <h5 className="font-medium text-dnd-primary mb-1 text-xs">Reactions</h5>
+          <div className="space-y-1 text-xs">
+            {console.log('⚡ StatBlock rendering imported reactions:', combatant.reactions)}
+            {combatant.reactions.map((reaction, index) => {
+              // Format the description with proper bolding
+              const formatReactionDescription = (desc: string) => {
+                return desc
+                  // Bold attack bonuses like "+4 to hit"
+                  .replace(/(\+\d+)\s+to hit/g, '<span class="font-bold">$1</span> to hit')
+                  // Bold damage like "4 (1d4 + 2)"
+                  .replace(/(\d+\s*\([^)]+\))/g, '<span class="font-bold">$1</span>')
+                  // Bold DC values
+                  .replace(/DC\s*(\d+)/g, 'DC <span class="font-bold">$1</span>');
+              };
+
+              return (
+                <div key={index}>
+                  <span className="font-bold text-dnd-secondary">{reaction.name}:</span>
+                  <span
+                    className="text-dnd-primary ml-1"
+                    dangerouslySetInnerHTML={{ __html: formatReactionDescription(reaction.description) }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Lair Actions */}
+      {!combatant.isPC && combatant.specialAbilities && combatant.specialAbilities.length > 0 && (
+        (() => {
+          // Filter for lair action abilities
+          const lairActions = combatant.specialAbilities.filter(ability =>
+            ability.name.toLowerCase().includes('lair') ||
+            ability.description.toLowerCase().includes('lair action') ||
+            ability.description.toLowerCase().includes('initiative count 20')
+          );
+
+          if (lairActions.length === 0) return null;
+
+          return (
+            <div className="border-t border-dnd pt-2">
+              <h5 className="font-medium text-dnd-primary mb-1 text-xs">Lair Actions</h5>
+              <div className="space-y-1 text-xs">
+                {console.log('🏰 StatBlock rendering lair actions:', lairActions)}
+                {lairActions.map((action, index) => {
+                  // Format the description with proper bolding
+                  const formatLairDescription = (desc: string) => {
+                    return desc
+                      // Bold DC values
+                      .replace(/DC\s*(\d+)/g, 'DC <span class="font-bold">$1</span>')
+                      // Bold damage like "4 (1d4 + 2)"
+                      .replace(/(\d+\s*\([^)]+\))/g, '<span class="font-bold">$1</span>')
+                      // Bold initiative count
+                      .replace(/(initiative count 20)/gi, '<span class="font-bold">$1</span>')
+                      // Bold feet measurements
+                      .replace(/(\d+)\s+feet?/g, '<span class="font-bold">$1</span> feet');
+                  };
+
+                  return (
+                    <div key={index}>
+                      <span className="font-bold text-dnd-secondary">{action.name}:</span>
+                      <span
+                        className="text-dnd-primary ml-1"
+                        dangerouslySetInnerHTML={{ __html: formatLairDescription(action.description) }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()
       )}
 
       {/* Conditions */}
@@ -438,23 +614,38 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         </div>
       )}
 
-      {/* PC-specific info */}
-      {combatant.isPC && combatant.level && (
-        <div className="bg-green-900/20 border border-green-800 rounded p-2">
-          <div className="text-xs text-green-300">
-            <strong>Player Character</strong> - Level {combatant.level}
+
+      {/* Import Source Info */}
+      {importSourceInfo && (
+        <div className="border-t border-dnd pt-2">
+          <div className="flex items-center gap-2 text-xs">
+            <div className={importSourceInfo.color}>
+              {importSourceInfo.icon}
+            </div>
+            <span className="text-dnd-muted">{importSourceInfo.label}</span>
+            {combatant.importedAt && (
+              <span className="text-dnd-muted">
+                • {new Date(combatant.importedAt).toLocaleDateString()}
+              </span>
+            )}
           </div>
         </div>
       )}
 
-      {/* Monster-specific info */}
-      {!combatant.isPC && combatant.cr && (
-        <div className="bg-orange-900/20 border border-orange-800 rounded p-2">
-          <div className="text-xs text-orange-300">
-            <strong>Challenge Rating {formatChallengeRating(combatant.cr)}</strong>
-            {combatant.xp && ` (${combatant.xp} XP)`}
-            <br />
-            Proficiency Bonus: +{getProficiencyBonus(combatant.cr)}
+      {/* Enhanced Stat Block Suggestion */}
+      {combatant.importSource === 'open5e' && combatant.name && (
+        <div className="border-t border-dnd pt-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-dnd-muted">💡 Want more complete stat blocks?</span>
+            <a
+              href={`https://www.aidedd.org/dnd/monstres.php?vo=${combatant.name.toLowerCase().replace(/\s+/g, '-').replace(/['']/g, '').replace(/[^\w-]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-dnd-primary hover:text-dnd-secondary text-xs underline flex items-center gap-1"
+            >
+              <Globe className="w-3 h-3" />
+              View on aidedd.org
+            </a>
           </div>
         </div>
       )}

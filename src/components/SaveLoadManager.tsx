@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Save, FolderOpen, Trash2, Download, Upload } from 'lucide-react'
+import { Save, FolderOpen, Trash2, Upload } from 'lucide-react'
 
 interface Combatant {
   id: string
@@ -15,6 +15,9 @@ interface Combatant {
   type?: string
   environment?: string
   xp?: number
+  tempHp?: number
+  importSource?: 'manual' | 'text' | 'dndbeyond'
+  importedAt?: string
 }
 
 interface SavedEncounter {
@@ -54,27 +57,6 @@ export const SaveLoadManager: React.FC<SaveLoadManagerProps> = ({
 }) => {
 
 
-  const exportEncounter = () => {
-    const currentEncounter = {
-      name: encounterName,
-      combatants,
-      round,
-      currentTurn,
-      notes: encounterNotes,
-      exportedAt: new Date().toISOString()
-    }
-    
-    const dataStr = JSON.stringify(currentEncounter, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(dataBlob)
-    
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${encounterName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`
-    link.click()
-    
-    URL.revokeObjectURL(url)
-  }
 
   const importEncounter = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -136,15 +118,6 @@ export const SaveLoadManager: React.FC<SaveLoadManagerProps> = ({
           Load
         </button>
 
-        {/* Export Button */}
-        <button
-          onClick={exportEncounter}
-          className="btn-dnd btn-dnd-success flex items-center gap-1 px-2 py-1 text-sm"
-          title="Export encounter to file"
-        >
-          <Download className="w-3 h-3" />
-          Export
-        </button>
 
         {/* Import Button */}
         <label className="btn-dnd btn-dnd-warning flex items-center gap-1 px-2 py-1 text-sm cursor-pointer">

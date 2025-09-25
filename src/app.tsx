@@ -108,10 +108,13 @@ const App: React.FC = () => {
   const [currentTurn, setCurrentTurn] = useState(0)
   const [round, setRound] = useState(1)
 
+  // State for viewing creature stat blocks without adding to encounter
+  const [viewingCreature, setViewingCreature] = useState<Combatant | null>(null)
+
   // Derive selected combatant from store state and local combatants
   const selectedCombatant = selectedCombatantId
-    ? combatants.find(c => c.id === selectedCombatantId) || null
-    : null
+    ? combatants.find(c => c.id === selectedCombatantId) || viewingCreature
+    : viewingCreature
   const [encounterNotes, setEncounterNotes] = useState('')
   const [encounterName, setEncounterName] = useState('Goblin Ambush')
   const [showQuickAddModal, setShowQuickAddModal] = useState(false)
@@ -263,11 +266,24 @@ const App: React.FC = () => {
   }
 
   const addCreatureFromDatabase = (creature: any) => {
-    const newCreature: Combatant = {
+    console.log('🔄 addCreatureFromDatabase called with:', creature);
+    console.log('🔍 creature.abilities:', creature.abilities);
+    console.log('🔍 creature.actions:', creature.actions);
+
+    // If the creature already has a full Combatant structure (from imports), use it
+    // Otherwise, build a basic one for simple database creatures
+    const newCreature: Combatant = creature.id ? {
+      // This is a fully imported creature, preserve all data
+      ...creature,
+      id: Date.now().toString() + Math.random(), // Generate new ID
+      initiative: 0, // Reset initiative
+      conditions: creature.conditions || [] // Ensure conditions array exists
+    } : {
+      // This is a simple database creature, build basic structure
       id: Date.now().toString() + Math.random(),
       name: creature.name,
       hp: creature.hp,
-      maxHp: creature.hp,
+      maxHp: creature.hp || creature.maxHp,
       ac: creature.ac,
       initiative: 0,
       isPC: false,
@@ -278,6 +294,11 @@ const App: React.FC = () => {
       xp: creature.xp,
       tempHp: 0
     }
+
+    console.log('✅ Created newCreature:', newCreature);
+    console.log('✅ newCreature.abilities:', newCreature.abilities);
+    console.log('✅ newCreature.actions:', newCreature.actions);
+
     setCombatants(prev => [...prev, newCreature])
   }
 
@@ -332,6 +353,7 @@ const App: React.FC = () => {
   }
 
   const handleCombatantClick = (combatant: Combatant) => {
+    setViewingCreature(null) // Clear any temp viewing creature
     setStoreSelectedCombatant(selectedCombatantId === combatant.id ? null : combatant.id)
   }
 
@@ -376,7 +398,36 @@ const App: React.FC = () => {
               <div className="text-xs text-dnd-muted">{difficultyData.xp} XP Total</div>
             </div>
 
-            <CreatureBrowser onAddCreature={addCreatureFromDatabase} />
+            <CreatureBrowser
+              onAddCreature={addCreatureFromDatabase}
+              onShowStatBlock={(creature) => {
+                // Create a temporary combatant for stat block viewing without adding to encounter
+                const tempCombatant: Combatant = creature.id ? {
+                  ...creature,
+                  id: `temp-${Date.now()}`,
+                  initiative: 0,
+                  conditions: creature.conditions || []
+                } : {
+                  id: `temp-${Date.now()}`,
+                  name: creature.name,
+                  hp: creature.hp || 1,
+                  maxHp: creature.maxHp || creature.hp || 1,
+                  ac: creature.ac || 10,
+                  initiative: 0,
+                  isPC: false,
+                  conditions: [],
+                  cr: creature.cr || '1',
+                  type: creature.type || 'unknown',
+                  tempHp: 0
+                };
+                setViewingCreature(tempCombatant);
+                setStoreSelectedCombatant(`temp-${Date.now()}`);
+                // Open right panel if it's collapsed
+                if (rightPanelCollapsed) {
+                  toggleRightPanel();
+                }
+              }}
+            />
           </div>
         </Sidebar>
       </div>
@@ -497,7 +548,10 @@ const App: React.FC = () => {
         selectedCombatant={selectedCombatant}
         encounterNotes={encounterNotes}
         onNotesChange={setEncounterNotes}
-        onSelectCombatant={(combatant) => setStoreSelectedCombatant(combatant?.id || null)}
+        onSelectCombatant={(combatant) => {
+          setViewingCreature(null) // Clear any temp viewing creature
+          setStoreSelectedCombatant(combatant?.id || null)
+        }}
       />
 
       {/* Modals */}

@@ -18,6 +18,28 @@ export interface Combatant {
   environment?: string;
   xp?: number;
   tempHp?: number;
+  importSource?: 'manual' | 'text' | 'dndbeyond';
+  importedAt?: string;
+  abilities?: {
+    str?: number;
+    dex?: number;
+    con?: number;
+    int?: number;
+    wis?: number;
+    cha?: number;
+  };
+  saves?: string;
+  skills?: string;
+  damageResistances?: string;
+  damageImmunities?: string;
+  conditionImmunities?: string;
+  senses?: string;
+  languages?: string;
+  speed?: string;
+  legendaryActions?: Array<{ name: string; description: string; cost?: number }>;
+  lairActions?: Array<{ name: string; description: string }>;
+  specialAbilities?: Array<{ name: string; description: string }>;
+  actions?: Array<{ name: string; description: string }>;
 }
 
 export interface SavedEncounter {
