@@ -181,6 +181,10 @@ export class DnD5eAPI {
       this.monstersCache = data.results || [];
       return this.monstersCache;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Monsters list fetch was cancelled');
+        return []; // Return empty array instead of throwing
+      }
       console.error('Failed to fetch monsters list:', error);
       throw error;
     }
@@ -235,79 +239,115 @@ export class DnD5eAPI {
       this.monsterDetailsCache.set(slug, monster);
       return monster;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log(`Monster detail fetch for ${slug} was cancelled`);
+        throw error; // Still throw for detail fetches as they're more critical
+      }
       console.error(`Failed to fetch monster ${slug}:`, error);
       throw error;
     }
   }
 
   /**
-   * Search monsters by name (fuzzy search)
-   */
-  /**
-   * Enhanced monster search with additional sources
+   * Enhanced monster search using server-side filtering
    */
   async searchMonsters(query: string): Promise<MonsterListEntry[]> {
-    const monsters = await this.getMonsters();
     const normalizedQuery = query.toLowerCase().trim();
 
     if (!normalizedQuery) {
       return [];
     }
 
-    // First filter by search criteria
-    const filteredMonsters = monsters.filter(monster => {
-      const name = monster.name?.toLowerCase() || '';
-      const slug = monster.slug?.toLowerCase() || '';
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      // Exact match first
-      if (name === normalizedQuery || slug === normalizedQuery) {
-        return true;
-      }
+      // Use the API's search parameter for server-side filtering
+      const searchUrl = `${this.baseUrl}/monsters?search=${encodeURIComponent(normalizedQuery)}`;
 
-      // Contains match
-      if (name.includes(normalizedQuery) || slug.includes(normalizedQuery)) {
-        return true;
-      }
-
-      // Word boundary match
-      const words = normalizedQuery.split(' ');
-      return words.every(word =>
-        name.includes(word) || slug.includes(word)
-      );
-    });
-
-    // Remove duplicates by prioritizing core D&D 5e sources
-    const uniqueMonsters = new Map<string, MonsterListEntry>();
-    const sourcePriority: Record<string, number> = {
-      '5e Core Rules': 1,
-      'Systems Reference Document': 2,
-      'Level Up Advanced 5e Monstrous Menagerie': 3,
-      'Tome of Beasts': 4,
-      'Tome of Beasts 2': 5,
-      'Creature Codex': 6
-    };
-
-    filteredMonsters.forEach(monster => {
-      const baseName = monster.name.toLowerCase();
-      const currentPriority = sourcePriority[monster.document__title || ''] || 99;
-
-      if (!uniqueMonsters.has(baseName) ||
-          currentPriority < (sourcePriority[uniqueMonsters.get(baseName)?.document__title || ''] || 99)) {
-        uniqueMonsters.set(baseName, monster);
-      }
-    });
-
-    return Array.from(uniqueMonsters.values())
-      .sort((a, b) => {
-        // Sort by source priority, then by name
-        const aPriority = sourcePriority[a.document__title || ''] || 99;
-        const bPriority = sourcePriority[b.document__title || ''] || 99;
-        if (aPriority !== bPriority) {
-          return aPriority - bPriority;
+      const response = await fetch(searchUrl, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json'
         }
-        return a.name.localeCompare(b.name);
-      })
-      .slice(0, 20); // Limit results
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const results = data.results || [];
+
+      console.log(`🔍 Server-side search for "${normalizedQuery}" returned ${results.length} results`);
+
+      // Remove duplicates by prioritizing core D&D 5e sources
+      const uniqueMonsters = new Map<string, MonsterListEntry>();
+      const sourcePriority: Record<string, number> = {
+        '5e Core Rules': 1,
+        'Systems Reference Document': 2,
+        'Level Up Advanced 5e Monstrous Menagerie': 3,
+        'Tome of Beasts': 4,
+        'Tome of Beasts 2': 5,
+        'Creature Codex': 6
+      };
+
+      results.forEach((monster: MonsterListEntry) => {
+        const baseName = monster.name.toLowerCase();
+        const currentPriority = sourcePriority[monster.document__title || ''] || 99;
+
+        if (!uniqueMonsters.has(baseName) ||
+            currentPriority < (sourcePriority[uniqueMonsters.get(baseName)?.document__title || ''] || 99)) {
+          uniqueMonsters.set(baseName, monster);
+        }
+      });
+
+      return Array.from(uniqueMonsters.values())
+        .sort((a, b) => {
+          // Sort by source priority, then by name
+          const aPriority = sourcePriority[a.document__title || ''] || 99;
+          const bPriority = sourcePriority[b.document__title || ''] || 99;
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+          }
+          return a.name.localeCompare(b.name);
+        })
+        .slice(0, 20); // Limit results
+
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log(`Monster search for "${normalizedQuery}" was cancelled`);
+        return [];
+      }
+      console.error(`Failed to search monsters for "${normalizedQuery}":`, error);
+
+      // Fallback to client-side filtering if server search fails
+      console.log('Falling back to client-side search...');
+      return this.fallbackSearch(normalizedQuery);
+    }
+  }
+
+  /**
+   * Fallback client-side search when server search fails
+   */
+  private async fallbackSearch(query: string): Promise<MonsterListEntry[]> {
+    try {
+      const monsters = await this.getMonsters();
+      const normalizedQuery = query.toLowerCase().trim();
+
+      const filteredMonsters = monsters.filter(monster => {
+        const name = monster.name?.toLowerCase() || '';
+        const slug = monster.slug?.toLowerCase() || '';
+        return name.includes(normalizedQuery) || slug.includes(normalizedQuery);
+      });
+
+      return filteredMonsters.slice(0, 20); // Limit results for fallback
+    } catch (error) {
+      console.error('Fallback search also failed:', error);
+      return [];
+    }
   }
 
   /**
@@ -398,6 +438,7 @@ export class DnD5eAPI {
       xp: crToXP(monster.challenge_rating || '1'),
       importSource: 'open5e',
       importedAt: new Date().toISOString(),
+      sourceUrl: `https://open5e.com/monsters/${monster.slug}`,
       apiData: monster // Store original API data for reference
     };
   }
