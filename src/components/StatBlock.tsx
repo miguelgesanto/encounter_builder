@@ -139,7 +139,7 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
       {!collapsed && (
         <>
           {/* Basic Stats */}
-      <div className="grid grid-cols-3 gap-1 text-xs">
+      <div className="grid grid-cols-4 gap-1 text-xs">
         <div className="text-center bg-dnd-primary/10 rounded p-1">
           <div className="font-medium text-dnd-secondary flex items-center justify-center gap-1">
             <Shield className="w-3 h-3" />
@@ -171,6 +171,20 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
             {combatant.type === 'undead' && 'hover'}
           </div>
         </div>
+        {!combatant.isPC && (
+          <div className="text-center bg-dnd-primary/10 rounded p-1">
+            <div className="font-medium text-dnd-secondary flex items-center justify-center gap-1">
+              <Swords className="w-3 h-3" />
+              CR
+            </div>
+            <div className="text-sm font-bold text-dnd-primary">
+              {combatant.cr ? formatChallengeRating(combatant.cr) : 'N/A'}
+            </div>
+            <div className="text-xs text-dnd-muted">
+              {combatant.xp ? `${combatant.xp.toLocaleString()} XP` : 'XP Unknown'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Ability Scores */}
@@ -632,23 +646,6 @@ export const StatBlock: React.FC<StatBlockProps> = ({ combatant, onCollapse }) =
         </div>
       )}
 
-      {/* Enhanced Stat Block Suggestion */}
-      {combatant.importSource === 'open5e' && combatant.name && (
-        <div className="border-t border-dnd pt-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-dnd-muted">💡 Want more complete stat blocks?</span>
-            <a
-              href={`https://www.aidedd.org/dnd/monstres.php?vo=${combatant.name.toLowerCase().replace(/\s+/g, '-').replace(/['']/g, '').replace(/[^\w-]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-dnd-primary hover:text-dnd-secondary text-xs underline flex items-center gap-1"
-            >
-              <Globe className="w-3 h-3" />
-              View on aidedd.org
-            </a>
-          </div>
-        </div>
-      )}
         </>
       )}
     </div>

@@ -18,8 +18,9 @@ export interface Combatant {
   environment?: string;
   xp?: number;
   tempHp?: number;
-  importSource?: 'manual' | 'text' | 'dndbeyond';
+  importSource?: 'manual' | 'text' | 'dndbeyond' | 'open5e';
   importedAt?: string;
+  sourceUrl?: string;
   abilities?: {
     str?: number;
     dex?: number;

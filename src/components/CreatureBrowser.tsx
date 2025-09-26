@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, Filter, Upload, Loader, Link } from 'lucide-react'
+import { Search, Plus, Filter, Upload, Loader } from 'lucide-react'
 import { MonsterImport } from './MonsterImport'
-import { UrlMonsterImport } from './UrlMonsterImport'
 import { dnd5eAPI, MonsterListEntry } from '../utils/dnd5eAPI'
 
 // Simple creature data with CR information
@@ -27,7 +26,6 @@ export const CreatureBrowser: React.FC<CreatureBrowserProps> = ({ onAddCreature,
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [showImport, setShowImport] = useState(false)
-  const [showUrlImport, setShowUrlImport] = useState(false)
   const [apiResults, setApiResults] = useState<MonsterListEntry[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [selectedMonster, setSelectedMonster] = useState<any>(null)
@@ -214,14 +212,6 @@ export const CreatureBrowser: React.FC<CreatureBrowserProps> = ({ onAddCreature,
     )
   }
 
-  if (showUrlImport) {
-    return (
-      <UrlMonsterImport
-        onImportMonster={handleImportMonster}
-        onCancel={() => setShowUrlImport(false)}
-      />
-    )
-  }
 
 
   return (
@@ -239,13 +229,6 @@ export const CreatureBrowser: React.FC<CreatureBrowserProps> = ({ onAddCreature,
         >
           <Upload className="w-4 h-4" />
           Import from Text
-        </button>
-        <button
-          onClick={() => setShowUrlImport(true)}
-          className="btn-dnd btn-dnd-primary w-full px-3 py-2 flex items-center justify-center gap-2 text-sm font-medium"
-        >
-          <Link className="w-4 h-4" />
-          Import from URL
         </button>
       </div>
 
@@ -314,7 +297,7 @@ export const CreatureBrowser: React.FC<CreatureBrowserProps> = ({ onAddCreature,
                       className="text-dnd-muted hover:text-dnd-primary text-xs underline flex items-center gap-1"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Link className="w-3 h-3" />
+                      📄
                       Full stat block
                     </a>
                   </div>
