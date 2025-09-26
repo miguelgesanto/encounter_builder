@@ -1,0 +1,1 @@
+export { ErrorBoundary, CombatErrorBoundary } from './ErrorBoundary'
