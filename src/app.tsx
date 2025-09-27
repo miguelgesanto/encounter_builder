@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Plus, Dice1, Play, Heart, Shield, User, Swords, Lightbulb } from 'lucide-react'
 import { CreatureBrowser } from './components/CreatureBrowser'
 import { Sidebar } from './components/Sidebar'
@@ -10,12 +10,43 @@ import { HPModal } from './components/HPModal'
 import { QuickAddModal } from './components/QuickAddModal'
 import CombatCard from './components/CombatCard'
 import DMReminderCard from './components/DMReminderCard'
+import AIReminderCard from './components/AIReminderCard'
+// import { useAIReminders } from './features/dm-reminders/hooks/useAIReminders' // Temporarily disabled due to dependencies
 import { Combatant, SavedEncounter as SavedEncounterType } from './types/combatant'
 import { STORAGE_KEYS } from './constants/ui'
 import { useInitiative } from './hooks/useInitiative'
 import { useEncounterBalance } from './hooks/useEncounterBalance'
 import { useEncounterStore } from './stores/encounterStore'
 import { checkForLairActions, getCurrentCreature, hasActiveReminders } from './utils/reminder-logic'
+// AI-assisted DM reminder system
+import { ReminderAIAgent } from './features/dm-reminders/agents/ReminderAIAgent'
+import { ReminderContent, DisplayedReminder } from './features/dm-reminders/types/reminder.types'
+// Generalizable ability parsing
+import {
+  processRechargeRolls,
+  initializeRechargeAbilities,
+  processRegeneration,
+  generateRegenerationReminder
+} from './utils/abilityParser'
+// Advanced D&D mechanics
+import {
+  generateSpellDurationReminder,
+  isConcentrationNearExpiry,
+  generateSavingThrowReminder,
+  COMMON_SAVE_DCS
+} from './utils/concentrationUtils'
+import {
+  analyzeConditionInteractions,
+  generateConditionReminder,
+  generateDeathSaveReminder
+} from './utils/combatMechanics'
+import {
+  generateSpecialAbilityReminders,
+  generateContextualAbilityReminders
+} from './utils/specialAbilityParser'
+import {
+  getContextualReminders
+} from './utils/reminder-logic'
 
 const App: React.FC = () => {
   const { rollInitiative, rollAllInitiative, sortByInitiative } = useInitiative();
@@ -40,7 +71,7 @@ const App: React.FC = () => {
       ac: parseInt('15'),
       initiative: parseInt('12'),
       isPC: false,
-      conditions: [{ name: 'Poisoned' }],
+      conditions: [{ name: 'Poisoned' }, { name: 'Prone' }],
       cr: '1/4',
       type: 'humanoid',
       environment: 'forest',
@@ -57,7 +88,22 @@ const App: React.FC = () => {
       isPC: true,
       level: parseInt('5'),
       conditions: [],
-      tempHp: parseInt('0')
+      tempHp: parseInt('0'),
+      concentratingOn: {
+        spellName: 'Bless',
+        spellLevel: 1,
+        duration: 'Concentration, up to 1 minute',
+        startedRound: 1,
+        dc: 13
+      },
+      abilities: {
+        str: 16,
+        dex: 14,
+        con: 15,
+        int: 10,
+        wis: 12,
+        cha: 13
+      }
     },
     {
       id: '3',
@@ -72,7 +118,28 @@ const App: React.FC = () => {
       type: 'dragon',
       environment: 'mountain',
       xp: parseInt('62000'),
-      tempHp: parseInt('0')
+      tempHp: parseInt('0'),
+      legendaryActionsRemaining: 3,
+      actions: [
+        { name: 'Multiattack', description: 'Makes three attacks: one bite and two claw attacks' },
+        { name: 'Bite', description: 'Melee weapon attack, 2d10 + 10 piercing plus 2d6 fire damage' },
+        { name: 'Claw', description: 'Melee weapon attack, 2d6 + 10 slashing damage' },
+        { name: 'Tail', description: 'Melee weapon attack, 2d8 + 10 bludgeoning damage' },
+        { name: 'Frightful Presence', description: 'Each creature within 120 feet must make a DC 21 Wisdom saving throw' },
+        { name: 'Fire Breath', description: 'Recharge 5-6. 90-foot cone, DC 24 Dexterity save, 91 (26d6) fire damage' }
+      ],
+      legendaryActions: [
+        { name: 'Detect', description: 'Makes a Wisdom (Perception) check', cost: 1 },
+        { name: 'Tail Attack', description: 'Makes a tail attack', cost: 1 },
+        { name: 'Wing Attack', description: 'Beats wings, creatures make saving throws', cost: 2 }
+      ],
+      lairActions: [
+        { name: 'Magma Eruption', description: 'Volcanic fissures erupt' },
+        { name: 'Tremor', description: 'Lair shakes violently' }
+      ],
+      rechargeAbilities: [
+        { name: 'Fire Breath', isAvailable: true, rechargeOn: '5-6', description: 'Recharge 5-6. 90-foot cone, DC 24 Dexterity save, 91 (26d6) fire damage' }
+      ]
     },
     {
       id: '4',
@@ -87,12 +154,23 @@ const App: React.FC = () => {
       type: 'undead',
       environment: 'dungeon',
       xp: parseInt('33000'),
-      tempHp: parseInt('0')
+      tempHp: parseInt('0'),
+      legendaryActionsRemaining: 3,
+      legendaryActions: [
+        { name: 'Cantrip', description: 'Casts a cantrip', cost: 1 },
+        { name: 'Paralyzing Touch', description: 'Makes a paralyzing touch attack', cost: 2 },
+        { name: 'Frightening Gaze', description: 'Targets creature with frightening gaze', cost: 2 },
+        { name: 'Disrupt Life', description: 'Damages all living creatures nearby', cost: 3 }
+      ],
+      lairActions: [
+        { name: 'Tainted Ground', description: 'Area becomes difficult terrain' },
+        { name: 'Undead Servants', description: 'Summons skeleton or zombie' }
+      ]
     },
     {
       id: '5',
       name: 'Troll',
-      hp: parseInt('84'),
+      hp: parseInt('60'), // Reduced to show regeneration
       maxHp: parseInt('84'),
       ac: parseInt('15'),
       initiative: parseInt('8'),
@@ -102,7 +180,31 @@ const App: React.FC = () => {
       type: 'giant',
       environment: 'swamp',
       xp: parseInt('1800'),
-      tempHp: parseInt('0')
+      tempHp: parseInt('0'),
+      specialAbilities: [
+        {
+          name: 'Keen Smell',
+          description: 'The troll has advantage on Wisdom (Perception) checks that rely on smell.'
+        },
+        {
+          name: 'Regeneration',
+          description: 'The troll regains 10 hit points at the start of its turn. If the troll takes acid or fire damage, this trait doesn\'t function at the start of the troll\'s next turn. The troll dies only if it starts its turn with 0 hit points and doesn\'t regenerate.'
+        }
+      ],
+      actions: [
+        {
+          name: 'Multiattack',
+          description: 'The troll makes three attacks: one with its bite and two with its claws.'
+        },
+        {
+          name: 'Bite',
+          description: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 7 (1d6 + 4) piercing damage.'
+        },
+        {
+          name: 'Claw',
+          description: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 11 (2d6 + 4) slashing damage.'
+        }
+      ]
     },
   ])
   const [currentTurn, setCurrentTurn] = useState(0)
@@ -127,6 +229,9 @@ const App: React.FC = () => {
   const [savedEncounters, setSavedEncounters] = useState<SavedEncounterType[]>([])
   const [showReminders, setShowReminders] = useState(true)
   const [activeReminders, setActiveReminders] = useState<Combatant[]>([])
+  const [aiReminders, setAiReminders] = useState<DisplayedReminder[]>([])
+  const [isAiReminderMode, setIsAiReminderMode] = useState(true)
+  const [isGeneratingReminders, setIsGeneratingReminders] = useState(false)
 
   // Load saved encounters from localStorage on mount
   useEffect(() => {
@@ -145,10 +250,166 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.SAVED_ENCOUNTERS, JSON.stringify(savedEncounters))
   }, [savedEncounters])
 
+  // Simple AI reminder generation (working version)
+  const generateSimpleAIReminders = useCallback(async (turnIndex: number, currentRound: number) => {
+    console.log('🔄 Generating simple AI reminders for turn', turnIndex, 'round', currentRound)
+
+    if (!showReminders || combatants.length === 0) {
+      setAiReminders([])
+      return
+    }
+
+    setIsGeneratingReminders(true)
+
+    try {
+      const newReminders: DisplayedReminder[] = []
+      const currentCreature = combatants[turnIndex]
+      const previousCreature = turnIndex > 0 ? combatants[turnIndex - 1] : null
+
+      // 1. INITIATIVE 20 EFFECTS - Check if we crossed initiative 20
+      const crossedInitiative20 = previousCreature
+        ? (previousCreature.initiative > 20 && currentCreature.initiative < 20)
+        : (turnIndex === 0) // Start of combat
+
+      if (crossedInitiative20) {
+        console.log('🏰 Initiative 20 effects triggered!')
+
+        // Find all creatures with lair actions
+        combatants.forEach(creature => {
+          if (creature.lairActions && creature.lairActions.length > 0) {
+            const lairContent = `**${creature.name}** (NPC) - Turn ${turnIndex + 1}\n\n**Special Abilities:**\nInitiative 20 - Lair Actions\nChoose one: ${creature.lairActions.map(action => action.name).join(', ')}`
+
+            newReminders.push({
+              id: `lair_${creature.id}_${Date.now()}`,
+              content: lairContent,
+              type: 'lair_actions',
+              urgency: 'critical',
+              displayDuration: 8000,
+              position: 'turn-panel',
+              timing: 'immediate',
+              dismissible: true,
+              isVisible: true,
+              startTime: Date.now()
+            })
+          }
+        })
+      }
+
+      // 2. CURRENT CREATURE'S TURN - Start of turn abilities
+      const currentTurnCreature = combatants[turnIndex]
+      if (currentTurnCreature) {
+        const startOfTurnLines: string[] = []
+
+        // Conditions
+        if (currentTurnCreature.conditions && currentTurnCreature.conditions.length > 0) {
+          currentTurnCreature.conditions.forEach(condition => {
+            const conditionName = typeof condition === 'object' ? condition.name : condition
+            startOfTurnLines.push(`${conditionName} condition active`)
+          })
+        }
+
+        // Concentration
+        if (currentTurnCreature.concentratingOn) {
+          startOfTurnLines.push(`Concentrating on ${currentTurnCreature.concentratingOn}`)
+        }
+
+        // Special Abilities - simplified
+        if (currentTurnCreature.specialAbilities && currentTurnCreature.specialAbilities.length > 0) {
+          currentTurnCreature.specialAbilities.forEach(ability => {
+            const name = ability.name.toLowerCase()
+            if (name.includes('regenerat')) {
+              startOfTurnLines.push(`Regeneration: heals at start of turn`)
+            } else if (name.includes('legendary resistance')) {
+              startOfTurnLines.push(`Legendary Resistance available`)
+            } else if (name.includes('magic resistance')) {
+              startOfTurnLines.push(`Magic Resistance: advantage on saves`)
+            } else {
+              startOfTurnLines.push(`${ability.name}: special ability active`)
+            }
+          })
+        }
+
+        // Important Actions - simplified
+        if (currentTurnCreature.actions && currentTurnCreature.actions.length > 0) {
+          currentTurnCreature.actions.forEach(action => {
+            const name = action.name.toLowerCase()
+            const desc = action.description.toLowerCase()
+
+            if (desc.includes('recharge')) {
+              startOfTurnLines.push(`${action.name}: recharge ability available`)
+            } else if (name.includes('multiattack')) {
+              startOfTurnLines.push(`Multiattack: can make multiple attacks`)
+            }
+          })
+        }
+
+        // Legendary Actions Reset
+        if (currentTurnCreature.legendaryActions && currentTurnCreature.legendaryActions.length > 0) {
+          startOfTurnLines.push(`Legendary Actions: 3 actions reset`)
+        }
+
+        // Create start-of-turn card if there's content
+        if (startOfTurnLines.length > 0) {
+          const startTurnContent = `**${currentTurnCreature.name}** ${currentTurnCreature.isPC ? '(PC)' : '(NPC)'} - Turn ${turnIndex + 1}\n\n**Special Abilities:**\n${startOfTurnLines.join('\n')}`
+
+          newReminders.push({
+            id: `start_turn_${currentTurnCreature.id}_${Date.now()}`,
+            content: startTurnContent,
+            type: 'start_of_turn',
+            urgency: 'medium',
+            displayDuration: 8000,
+            position: 'turn-panel',
+            timing: 'immediate',
+            dismissible: true,
+            isVisible: true,
+            startTime: Date.now()
+          })
+        }
+      }
+
+      // 3. LEGENDARY ACTIONS - Check ALL creatures with legendary actions (except current creature)
+      combatants.forEach(creature => {
+        const isCurrentCreature = creature.id === currentTurnCreature?.id
+
+        if (!isCurrentCreature && creature.legendaryActions && creature.legendaryActions.length > 0) {
+          const actionCount = creature.legendaryActionsRemaining || 3
+          const legendaryContent = `**${creature.name}** (NPC) - Turn ${turnIndex + 1}\n\n**Special Abilities:**\nLegendary Actions: ${actionCount} remaining\nCan use between other turns`
+
+          newReminders.push({
+            id: `legendary_${creature.id}_${Date.now()}`,
+            content: legendaryContent,
+            type: 'legendary_actions',
+            urgency: 'high',
+            displayDuration: 8000,
+            position: 'turn-panel',
+            timing: 'immediate',
+            dismissible: true,
+            isVisible: true,
+            startTime: Date.now()
+          })
+        }
+      })
+
+      console.log('✅ Generated', newReminders.length, 'simple AI reminders')
+      setAiReminders(newReminders)
+
+    } catch (error) {
+      console.error('❌ Error generating simple AI reminders:', error)
+      setAiReminders([])
+    } finally {
+      setIsGeneratingReminders(false)
+    }
+  }, [combatants, showReminders])
+
   // Update reminders when combatants change or reminders setting changes
   useEffect(() => {
-    updateReminders(currentTurn, round)
-  }, [combatants, showReminders, currentTurn, round])
+    console.log('📱 useEffect triggered - AI mode:', isAiReminderMode, 'showReminders:', showReminders)
+    if (isAiReminderMode) {
+      generateSimpleAIReminders(currentTurn, round)
+    } else {
+      updateReminders(currentTurn, round)
+    }
+  }, [combatants, showReminders, currentTurn, round, isAiReminderMode, generateSimpleAIReminders])
 
   const saveEncounter = () => {
     if (!saveEncounterName.trim()) return
@@ -197,16 +458,86 @@ const App: React.FC = () => {
       nextRound = round + 1
       setRound(nextRound)
     }
+
+    // Update combatant state when it becomes their turn
+    setCombatants(prev => prev.map((combatant, index) => {
+      if (index === nextIndex) {
+        // Reset legendary actions at start of creature's turn
+        let updates: Partial<Combatant> = {}
+        if (combatant.legendaryActions && combatant.legendaryActions.length > 0) {
+          updates.legendaryActionsRemaining = 3
+        }
+
+        // Process recharge abilities (generalizable for any creature)
+        const { combatant: updatedCombatant, messages } = processRechargeRolls(combatant)
+
+        // Log recharge messages
+        messages.forEach(message => console.log(message))
+
+        return { ...updatedCombatant, ...updates }
+      }
+      return combatant
+    }))
+
     setCurrentTurn(nextIndex)
 
     // Update reminders after turn change
-    updateReminders(nextIndex, nextRound)
+    if (isAiReminderMode) {
+      generateSimpleAIReminders(nextIndex, nextRound)
+    } else {
+      updateReminders(nextIndex, nextRound)
+    }
 
     // Trigger store nextTurn to handle auto-collapse
     storeNextTurn()
   }
 
-  // New reminder update function
+  // Legendary action reminders function - shows after any creature's turn ends
+  const updateLegendaryActionReminders = () => {
+    console.log('🦁 updateLegendaryActionReminders called')
+
+    if (!showReminders) {
+      console.log('⚠️ Reminders disabled')
+      return
+    }
+
+    // Find all legendary creatures that have remaining legendary actions
+    const legendaryCreatureReminders = combatants
+      .filter(creature =>
+        creature.legendaryActions &&
+        creature.legendaryActions.length > 0 &&
+        (creature.legendaryActionsRemaining || 3) > 0
+      )
+      .map(creature => ({
+        id: `legendary_${creature.id}_${Date.now()}`,
+        content: `🦁 **${creature.name}** can use legendary actions (${creature.legendaryActionsRemaining || 3}/3 remaining)\n\nLegendary Actions:\n${creature.legendaryActions?.map(action => `• ${action.name} (${action.cost || 1} action${(action.cost || 1) > 1 ? 's' : ''}): ${action.description}`).join('\n') || ''}`,
+        type: 'legendary_actions' as const,
+        urgency: 'medium' as const,
+        displayDuration: 10000,
+        position: 'turn-panel' as const,
+        timing: 'immediate' as const,
+        dismissible: true,
+        isVisible: true,
+        startTime: Date.now()
+      }))
+
+    if (legendaryCreatureReminders.length > 0) {
+      console.log('✅ Adding', legendaryCreatureReminders.length, 'legendary action reminders')
+      setAiReminders(prev => [...prev, ...legendaryCreatureReminders])
+    } else {
+      console.log('💭 No legendary creatures with remaining actions found')
+    }
+  }
+
+  // AI-powered reminder update function
+  // Helper function to convert static reminders to AI-enhanced content
+  const generateEnhancedReminderContent = (reminder: any, creature: Combatant, turnIndex: number): string => {
+    const header = `**${creature.name}** (${creature.isPC ? 'PC' : 'NPC'}) - Round ${currentRound}`
+    const content = `**Special Abilities:**\n${reminder.name}: ${reminder.description}`
+    return `${header}\n\n${content}`
+  }
+
+  // Basic reminder update function (fallback)
   const updateReminders = (turnIndex: number, currentRound: number) => {
     if (!showReminders || combatants.length === 0) {
       setActiveReminders([])
@@ -272,7 +603,7 @@ const App: React.FC = () => {
 
     // If the creature already has a full Combatant structure (from imports), use it
     // Otherwise, build a basic one for simple database creatures
-    const newCreature: Combatant = creature.id ? {
+    let newCreature: Combatant = creature.id ? {
       // This is a fully imported creature, preserve all data
       ...creature,
       id: Date.now().toString() + Math.random(), // Generate new ID
@@ -295,9 +626,13 @@ const App: React.FC = () => {
       tempHp: 0
     }
 
+    // Apply generalizable ability parsing to detect recharge abilities
+    newCreature = initializeRechargeAbilities(newCreature)
+
     console.log('✅ Created newCreature:', newCreature);
     console.log('✅ newCreature.abilities:', newCreature.abilities);
     console.log('✅ newCreature.actions:', newCreature.actions);
+    console.log('✅ newCreature.rechargeAbilities:', newCreature.rechargeAbilities);
 
     setCombatants(prev => [...prev, newCreature])
   }
@@ -314,12 +649,16 @@ const App: React.FC = () => {
   }
 
   const addCreatureFromModal = (creatureData: any) => {
-    const newCreature: Combatant = {
+    let newCreature: Combatant = {
       id: Date.now().toString() + Math.random(),
       ...creatureData,
       conditions: [],
       tempHp: creatureData.tempHp || 0
     }
+
+    // Apply generalizable ability parsing to detect recharge abilities
+    newCreature = initializeRechargeAbilities(newCreature)
+
     setCombatants(prev => [...prev, newCreature])
   }
 
@@ -359,16 +698,25 @@ const App: React.FC = () => {
 
   const loadEncounter = (encounter: SavedEncounterType) => {
     // Ensure all numeric values are properly parsed when loading
-    const fixedCombatants = encounter.combatants.map(c => ({
-      ...c,
-      hp: parseInt(String(c.hp)) || 0,
-      maxHp: parseInt(String(c.maxHp)) || 0,
-      ac: parseInt(String(c.ac)) || 0,
-      initiative: parseInt(String(c.initiative)) || 0,
-      tempHp: parseInt(String(c.tempHp)) || 0,
-      level: c.level ? parseInt(String(c.level)) : undefined,
-      xp: c.xp ? parseInt(String(c.xp)) : undefined
-    }))
+    const fixedCombatants = encounter.combatants.map(c => {
+      let combatant: Combatant = {
+        ...c,
+        hp: parseInt(String(c.hp)) || 0,
+        maxHp: parseInt(String(c.maxHp)) || 0,
+        ac: parseInt(String(c.ac)) || 0,
+        initiative: parseInt(String(c.initiative)) || 0,
+        tempHp: parseInt(String(c.tempHp)) || 0,
+        level: c.level ? parseInt(String(c.level)) : undefined,
+        xp: c.xp ? parseInt(String(c.xp)) : undefined
+      }
+
+      // Apply generalizable ability parsing to detect recharge abilities if not already present
+      if (!combatant.rechargeAbilities || combatant.rechargeAbilities.length === 0) {
+        combatant = initializeRechargeAbilities(combatant)
+      }
+
+      return combatant
+    })
 
     setCombatants(fixedCombatants)
     setRound(parseInt(String(encounter.round)) || 1)
@@ -468,7 +816,7 @@ const App: React.FC = () => {
               <Play className="w-3 h-3" />
               Next Turn
             </button>
-            <button onClick={() => { setRound(1); setCurrentTurn(0); setActiveReminders([]) }} className="btn-dnd btn-dnd-secondary flex items-center gap-1 px-2 py-1 text-sm">
+            <button onClick={() => { setRound(1); setCurrentTurn(0); setActiveReminders([]); setAiReminders([]) }} className="btn-dnd btn-dnd-secondary flex items-center gap-1 px-2 py-1 text-sm">
               Reset
             </button>
             <button
@@ -481,6 +829,19 @@ const App: React.FC = () => {
               <Lightbulb className="w-3 h-3" />
               DM Reminders
             </button>
+            <button
+              onClick={() => {
+                console.log('🔄 Toggling AI mode from', isAiReminderMode, 'to', !isAiReminderMode)
+                setIsAiReminderMode(!isAiReminderMode)
+              }}
+              className={`px-2 py-1 text-sm rounded-lg flex items-center gap-1 transition-colors ${
+                isAiReminderMode ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+              title={`Toggle AI-Assisted Reminders (Currently: ${isAiReminderMode ? 'AI' : 'Basic'})`}
+            >
+              🤖
+              {isAiReminderMode ? 'AI Mode' : 'Basic Mode'}
+            </button>
           </div>
         </div>
 
@@ -488,7 +849,40 @@ const App: React.FC = () => {
         {/* Initiative List */}
         <div className="flex-1 overflow-y-auto p-4 scrollbar-dnd">
           {/* DM Reminder Cards */}
-          {showReminders && activeReminders.map(creature => (
+          {showReminders && isAiReminderMode && (
+            <>
+              {console.log('🖥️ Rendering AI reminders:', {
+                showReminders,
+                isAiReminderMode,
+                aiRemindersLength: aiReminders.length,
+                isGenerating: isGeneratingReminders
+              })}
+
+              {/* Loading indicator */}
+              {isGeneratingReminders && (
+                <div className="card-dnd mb-2 border-l-4 border-blue-500 bg-blue-50">
+                  <div className="px-2 py-1 text-xs text-blue-700 flex items-center gap-2">
+                    <div className="animate-spin w-3 h-3 border border-blue-600 border-t-transparent rounded-full"></div>
+                    Generating AI reminders...
+                  </div>
+                </div>
+              )}
+
+              {/* Reminder cards */}
+              {aiReminders.map(reminder => {
+                console.log('🎴 Rendering individual reminder card:', reminder.id, reminder.type)
+                return (
+                  <AIReminderCard
+                    key={reminder.id}
+                    reminder={reminder}
+                    onDismiss={() => setAiReminders(prev => prev.filter(r => r.id !== reminder.id))}
+                  />
+                )
+              })}
+            </>
+          )}
+
+          {showReminders && !isAiReminderMode && activeReminders.map(creature => (
             <DMReminderCard
               key={`reminder-${creature.id}`}
               creature={creature}

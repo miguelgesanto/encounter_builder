@@ -222,6 +222,51 @@ const CombatCard: React.FC<CombatCardProps> = React.memo(({
         </div>
       )}
 
+      {/* Third Row: Legendary Actions (if any) */}
+      {combatant.legendaryActions && combatant.legendaryActions.length > 0 && (
+        <div className="flex items-center gap-2 ml-10 text-xs" onClick={(e) => e.stopPropagation()}>
+          <span className="text-purple-700 font-medium">🦁 Legendary:</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                const current = combatant.legendaryActionsRemaining || 3
+                if (current > 0) {
+                  onUpdateCreature(combatant.id, 'legendaryActionsRemaining', current - 1)
+                }
+              }}
+              disabled={(combatant.legendaryActionsRemaining || 3) <= 0}
+              className="bg-purple-100 hover:bg-purple-200 disabled:bg-gray-100 disabled:text-gray-400 text-purple-700 rounded px-1 py-0.5 text-xs font-bold transition-colors"
+              title="Use legendary action"
+            >
+              −
+            </button>
+            <span className="text-purple-700 font-mono text-xs min-w-[20px] text-center">
+              {combatant.legendaryActionsRemaining ?? 3}/3
+            </span>
+            <button
+              onClick={() => {
+                const current = combatant.legendaryActionsRemaining || 3
+                if (current < 3) {
+                  onUpdateCreature(combatant.id, 'legendaryActionsRemaining', current + 1)
+                }
+              }}
+              disabled={(combatant.legendaryActionsRemaining || 3) >= 3}
+              className="bg-purple-100 hover:bg-purple-200 disabled:bg-gray-100 disabled:text-gray-400 text-purple-700 rounded px-1 py-0.5 text-xs font-bold transition-colors"
+              title="Add legendary action"
+            >
+              +
+            </button>
+            <button
+              onClick={() => onUpdateCreature(combatant.id, 'legendaryActionsRemaining', 3)}
+              className="bg-purple-200 hover:bg-purple-300 text-purple-700 rounded px-1 py-0.5 text-xs font-medium transition-colors ml-1"
+              title="Reset to 3"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 });
