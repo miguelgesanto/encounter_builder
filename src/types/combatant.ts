@@ -41,6 +41,35 @@ export interface Combatant {
   lairActions?: Array<{ name: string; description: string }>;
   specialAbilities?: Array<{ name: string; description: string }>;
   actions?: Array<{ name: string; description: string }>;
+  // Combat state tracking
+  legendaryActionsRemaining?: number; // Resets to 3 at start of creature's turn
+  rechargeAbilities?: Array<{
+    name: string;
+    isAvailable: boolean;
+    rechargeOn: string; // e.g., "5-6", "4-6", "6"
+    description?: string;
+  }>;
+  concentratingOn?: {
+    spellName: string;
+    spellLevel: number;
+    duration: string; // e.g., "10 minutes", "1 hour", "Concentration, up to 1 minute"
+    startedRound: number;
+    dc?: number; // Spell save DC if applicable
+  };
+  savingThrows?: {
+    str?: number;
+    dex?: number;
+    con?: number;
+    int?: number;
+    wis?: number;
+    cha?: number;
+  };
+  regeneration?: {
+    amount: number; // HP regenerated per turn
+    damageTypes?: string[]; // Damage types that prevent regeneration (e.g., ["fire", "acid"])
+    isActive: boolean; // Whether regeneration is currently working
+    description?: string;
+  };
 }
 
 export interface SavedEncounter {
